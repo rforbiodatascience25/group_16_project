@@ -2,11 +2,12 @@
 title: "02_load"
 format: html
 ---
+
 # Load Data
 
 ```{r}
 raw_file <- "../data/_raw/GSE45827.RData"
-gse <- load(raw_file)
+load(raw_file)
 ```
 
 # Split Raw Data into 3 main Data Frames
