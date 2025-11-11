@@ -25,4 +25,8 @@ if (!file.exists(raw_file)) {
   gse <- getGEO("GSE45827", GSEMatrix = TRUE)
   save(gse, file = raw_file)
 }
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> f77606085473a29a98f468a65ce36af824ac0fe7
