@@ -1,0 +1,28 @@
+---
+title: "01_download"
+format: html
+---
+
+# Load Libraries
+
+```{r}
+library(GEOquery)
+library(tidyverse)
+```
+
+# Download Data
+
+Download the Data if it doesn't exist yet.
+
+```{r}
+if (!dir.exists("../data/_raw")) {
+  dir.create("../data/_raw", recursive = TRUE)
+}
+
+raw_file <- "../data/_raw/GSE45827.RData"
+
+if (!file.exists(raw_file)) {
+  gse <- getGEO("GSE45827", GSEMatrix = TRUE)
+  save(gse, file = raw_file)
+}
+```
