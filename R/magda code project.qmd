@@ -1,0 +1,135 @@
+---
+title: "magda"
+format: html
+editor: visual
+---
+
+```{r}
+library(limma)
+library(dplyr)
+library(msigdbr)
+library(fgsea)
+library(DESeq2)
+```
+
+```{r}
+# 1. Get the column as a simple text vector
+group_data_vector <- as.character(pheno_data$characteristics_ch1.1)
+
+# 2. Clean the text (e.g., "tumor subtype: Basal" -> "Basal")
+group_data_clean <- gsub("tumor subtype: ", "", group_data_vector)
+
+# 3. Find samples belonging to ANY of your four groups
+samples_to_keep <- which(
+  group_data_clean == "Basal" | 
+  group_data_clean == "Her2" |
+  group_data_clean == "Luminal A" |
+  group_data_clean == "Luminal B"
+)
+
+# 4. Filter your data objects
+pheno_data_filtered <- pheno_data[samples_to_keep, ]
+expr_data_filtered <- expr_data[, samples_to_keep]
+
+# 5. Create the final, clean 'groups' variable for limma
+groups <- as.factor(pheno_data_filtered$characteristics_ch1.1)
+groups <- factor(gsub("tumor subtype: ", "", groups))
+
+# 6. Check your work (should show 4 levels)
+print(length(samples_to_keep))
+print(levels(groups))
+```
+
+```{r}
+# 1. Create the design matrix (will have 4 columns)
+design <- model.matrix(~ 0 + groups)
+
+# 2. Clean column names (e.g., "Luminal A" -> "Luminal.A")
+clean_levels <- make.names(levels(groups))
+colnames(design) <- clean_levels
+
+# 3. Fit the linear model ONCE
+fit <- lmFit(expr_data_filtered, design)
+
+# 4. Create a "contrast matrix" for ALL comparisons
+contrast_matrix <- makeContrasts(
+  Basal_vs_Her2 = Basal - Her2,
+  Basal_vs_LumA = Basal - Luminal.A,
+  Her2_vs_LumA = Her2 - Luminal.A,
+  LumA_vs_LumB = Luminal.A - Luminal.B,
+  levels = design
+)
+
+# 5. Fit ALL the contrasts
+fit_contrast <- contrasts.fit(fit, contrast_matrix)
+fit_ebayes <- eBayes(fit_contrast)
+
+# 6. Check a summary of all comparisons
+print(summary(decideTests(fit_ebayes)))
+```
+
+```{r}
+# 1. Get the top_table for *only* the "Basal_vs_Her2" comparison
+# To get a different one, change the 'coef' (e.g., coef = "Basal_vs_LumA")
+top_table <- topTable(fit_ebayes, coef = "Basal_vs_Her2", number = Inf)
+
+# 2. Check the results
+head(top_table)
+
+# --- Prepare Gene Rank List (using the 'top_table' above) ---
+
+# 3. Add probe IDs from row names
+top_table$probe_id <- rownames(top_table)
+
+# 4. Create a map from your 'feature_data'
+probe_to_gene_map <- data.frame(
+  probe_id = rownames(feature_data),
+  gene_symbol = feature_data$"Gene Symbol" # Check "Gene Symbol" column name
+)
+
+# 5. Merge results with gene symbols
+res_with_symbols <- merge(top_table, probe_to_gene_map, by="probe_id")
+
+# 6. Clean and rank the data
+res_with_symbols <- res_with_symbols %>%
+  filter(!is.na(t) & !is.na(gene_symbol) & gene_symbol != "")
+
+# 7. Handle duplicate probes
+res_ranked <- res_with_symbols %>%
+  group_by(gene_symbol) %>%
+  slice_max(order_by = abs(t), n = 1) %>%
+  ungroup()
+
+# 8. Create the final 'stats' vector
+stats <- res_ranked$t
+names(stats) <- res_ranked$gene_symbol
+
+# 9. Sort the list
+stats <- sort(stats, decreasing = TRUE)
+
+# 10. Check your list
+head(stats)
+```
+
+
+```{r}
+# 1. Get the Biological Process (BP) gene sets
+BP_df <- msigdbr(species = "human", category = "C5", subcategory = "BP")
+
+# 2. Convert to the list format
+pathways <- split(BP_df$gene_symbol, f = BP_df$gs_name)
+
+# 3. Run the GSEA analysis
+fgseaRes <- fgseaMultilevel(
+  pathways = pathways,
+  stats    = stats,
+  minSize  = 15,
+  maxSize  = 500
+)
+
+# 4. View the top significant pathways for each comparisons f.e."Basal vs. Her2"
+print("Top GSEA results (Basal vs. Her2):")
+head(fgseaRes[order(padj), ])
+```
+
+
