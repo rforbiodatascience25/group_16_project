@@ -71,7 +71,7 @@ print(summary(decideTests(fit_ebayes)))
 ```{r}
 # 1. Get the top_table for *only* the "Basal_vs_Her2" comparison
 # To get a different one, change the 'coef' (e.g., coef = "Basal_vs_LumA")
-top_table <- topTable(fit_ebayes, coef = "Basal_vs_Her2", number = Inf)
+top_table <- topTable(fit_ebayes, coef = "Basal_vs_LumA", number = Inf)
 
 # 2. Check the results
 head(top_table)
@@ -128,8 +128,22 @@ fgseaRes <- fgseaMultilevel(
 )
 
 # 4. View the top significant pathways for each comparisons f.e."Basal vs. Her2"
-print("Top GSEA results (Basal vs. Her2):")
+print("Top GSEA results (Basal_vs_LumA):")
 head(fgseaRes[order(padj), ])
 ```
 
+```{r}
+# 1. Order your results by adjusted p-value
+fgseaRes_ordered <- fgseaRes[order(padj), ]
+
+# 2. Get the leading-edge genes for the #1 top pathway
+top_pathway_name <- fgseaRes_ordered$pathway[1]
+leading_edge_genes <- fgseaRes_ordered$leadingEdge[[1]]
+#Top genes 
+print(leading_edge_genes)
+# Plot the enrichment for  #1 top pathway
+plotEnrichment(pathways[[top_pathway_name]],
+               stats = stats) +
+  labs(title = top_pathway_name)
+```
 
