@@ -3,8 +3,6 @@ title: "pca_Natali_Alena"
 format: html
 ---
 
-
-
 ```{r}
 library(tidyverse)
 library(ggbiplot)
@@ -20,7 +18,6 @@ transp_expr <- t(expr_data)
 transp_expr <- data.frame(transp_expr)
 ```
 
-
 ```{r}
 transp_expr <- transp_expr |>
   mutate(subtype = pheno_data$`tumor subtype:ch1`)
@@ -30,5 +27,3 @@ transp_expr <- transp_expr |>
 pca_data <- pca_data |>
   filter(!is.na(subtype))
 ```
-
-
