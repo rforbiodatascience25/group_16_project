@@ -24,7 +24,12 @@ transp_expr <- t(expr_data)
 transp_expr <- data.frame(transp_expr)
 ```
 
-### Adding the subtype column
+### Adding columns for coloring
+
+```{r}
+transp_expr <- transp_expr |>
+  mutate(cancer = pheno_data$`diagnosis:ch1`)
+```
 
 ```{r}
 transp_expr <- transp_expr |>
@@ -35,10 +40,15 @@ transp_expr <- transp_expr |>
 
 ```{r}
 transp_expr <- transp_expr |>
+  filter(!is.na(cancer))
+```
+
+```{r}
+transp_expr <- transp_expr |>
   filter(!is.na(subtype))
 ```
 
-### Adjusting non-cancer subtype values to Normal 
+### Adjusting non-cancer subtype values to Normal
 
 ```{r}
 transp_expr <- transp_expr|>
@@ -48,7 +58,19 @@ transp_expr <- transp_expr|>
 ### PCA Computation
 
 ```{r}
-pc <- prcomp(transp_expr[-29874], center = TRUE, scale. = TRUE)
+expr_only <- transp_expr |>  select(-subtype, -cancer)
+```
+
+```{r}
+pc <- prcomp(expr_only, center = TRUE, scale. = TRUE)
+```
+
+```{r}
+ggbiplot(pc, 
+         obs.scale = 1,
+         var.scale = 1,
+         groups = transp_expr$cancer,
+         var.axes = FALSE)
 ```
 
 ```{r}
