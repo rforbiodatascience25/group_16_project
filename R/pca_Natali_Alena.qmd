@@ -3,3 +3,19 @@ title: "pca_Natali_Alena"
 format: html
 ---
 
+
+
+```{r}
+library(tidyverse)
+library(ggbiplot)
+library(devtools)
+
+```
+
+```{r}
+transp_expr <- t(expr_data)
+```
+
+```{r}
+transp_expr <- data.frame(transp_expr)
+```
