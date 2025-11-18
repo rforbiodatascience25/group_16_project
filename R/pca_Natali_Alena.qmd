@@ -14,7 +14,7 @@ library(devtools)
 
 ```
 
-### Transpose
+### Transpose data
 
 ```{r}
 transp_expr <- t(expr_data)
@@ -24,13 +24,33 @@ transp_expr <- t(expr_data)
 transp_expr <- data.frame(transp_expr)
 ```
 
+### Adding the subtype column
+
 ```{r}
 transp_expr <- transp_expr |>
   mutate(subtype = pheno_data$`tumor subtype:ch1`)
 
 ```
 
+### Removing empty values
+
 ```{r}
-pca_data <- pca_data |>
+transp_expr <- transp_expr |>
   filter(!is.na(subtype))
+```
+
+```{r}
+transp_expr |> select(subtype)
+```
+
+```{r}
+pc <- prcomp(transp_expr[-29874], center = TRUE, scale. = TRUE)
+```
+
+```{r}
+ggbiplot(pc, 
+         obs.scale = 1,
+         var.scale = 1,
+         groups = transp_expr$subtype)
+  
 ```
