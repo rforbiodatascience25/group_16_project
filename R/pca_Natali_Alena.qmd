@@ -3,7 +3,9 @@ title: "pca_Natali_Alena"
 format: html
 ---
 
+# PCA Plot
 
+### Load Libraries
 
 ```{r}
 library(tidyverse)
@@ -11,6 +13,8 @@ library(ggbiplot)
 library(devtools)
 
 ```
+
+### Transpose
 
 ```{r}
 transp_expr <- t(expr_data)
