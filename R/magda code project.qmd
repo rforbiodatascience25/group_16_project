@@ -14,12 +14,9 @@ library(DESeq2)
 
 ```{r}
 # 1. Get the column as a simple text vector
-group_data_vector <- as.character(pheno_data$characteristics_ch1.1)
+group_data_vector <- as.character(pheno_data$`tumor subtype:ch1`)
 
-# 2. Clean the text (e.g., "tumor subtype: Basal" -> "Basal")
-group_data_clean <- gsub("tumor subtype: ", "", group_data_vector)
-
-# 3. Find samples belonging to ANY of your four groups
+# 2. Find samples belonging to ANY of your four groups
 samples_to_keep <- which(
   group_data_clean == "Basal" | 
   group_data_clean == "Her2" |
@@ -139,11 +136,47 @@ fgseaRes_ordered <- fgseaRes[order(padj), ]
 # 2. Get the leading-edge genes for the #1 top pathway
 top_pathway_name <- fgseaRes_ordered$pathway[1]
 leading_edge_genes <- fgseaRes_ordered$leadingEdge[[1]]
-#Top genes 
-print(leading_edge_genes)
+#show top genes 
+first_genes <- head(leading_edge_genes,10)
+print(first_genes)
 # Plot the enrichment for  #1 top pathway
 plotEnrichment(pathways[[top_pathway_name]],
                stats = stats) +
   labs(title = top_pathway_name)
+```
+```{r}
+# 1. Get the top 3 pathways' full gene lists 
+top_5_gene_lists <- fgseaRes_ordered$leadingEdge[1:5]
+
+# 2. Get the names of these pathways so you know which is which
+top_5_names <- fgseaRes_ordered$pathway[1:5]
+
+# 3. Loop through them to print the top 10 genes for each
+for (i in 1:5) {
+  print(paste("--- Top 10 genes for Pathway:", top_5_names[i], "---"))
+  print(head(top_5_gene_lists[[i]], 10))
+}
+```
+
+```{r}
+# 1. Extract the leading-edge lists for the Top 5 pathways
+top_5_lists <- fgseaRes_ordered$leadingEdge[1:5]
+
+# 2. Find the "Core Drivers" (Genes present in ALL 5)
+# Reduce() applies the intersect function sequentially to all lists
+core_drivers <- Reduce(intersect, top_5_lists)
+
+# 3. Count intersections for EACH gene
+# This tells you if a gene is in 5, 4, 3, etc. of the pathways
+all_genes_flat <- unlist(top_5_lists)      # Flatten list into one big vector
+gene_counts <- table(all_genes_flat)       # Count frequency of each gene
+gene_counts_sorted <- sort(gene_counts, decreasing = TRUE) # Sort high to low
+
+
+# Optional: View specifically genes that appear in at least 3 out of 5
+print(gene_counts_sorted[gene_counts_sorted >= 3])
+```
+```{r}
+
 ```
 
