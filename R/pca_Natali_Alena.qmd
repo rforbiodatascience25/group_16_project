@@ -5,6 +5,8 @@ format: html
 
 # PCA Plot
 
+## Data Visualization
+
 ### Load Libraries
 
 ```{r}
@@ -14,7 +16,7 @@ library(devtools)
 
 ```
 
-### Transpose data
+### Tidy Data
 
 ```{r}
 transp_expr <- t(expr_data)
@@ -23,8 +25,6 @@ transp_expr <- t(expr_data)
 ```{r}
 transp_expr <- data.frame(transp_expr)
 ```
-
-### Adding columns for coloring
 
 ```{r}
 transp_expr <- transp_expr |>
@@ -36,8 +36,6 @@ transp_expr <- transp_expr |>
   mutate(subtype = pheno_data$`tumor subtype:ch1`)
 ```
 
-### Removing empty values
-
 ```{r}
 transp_expr <- transp_expr |>
   filter(!is.na(cancer))
@@ -48,14 +46,12 @@ transp_expr <- transp_expr |>
   filter(!is.na(subtype))
 ```
 
-### Adjusting non-cancer subtype values to Normal
-
 ```{r}
 transp_expr <- transp_expr|>
   mutate(subtype = if_else(subtype == "N/A", "Normal", subtype))
 ```
 
-### PCA Computation
+### PCA Calculation And Plotting
 
 ```{r}
 expr_only <- transp_expr |>  select(-subtype, -cancer)
@@ -81,3 +77,7 @@ ggbiplot(pc,
          var.axes = FALSE)
   
 ```
+
+## Data Analysis
+
+PCA Plots are a tool for visualizing correlation between data. Similarly behaving gene expressions are clustered. As coloring shows, the subtypes are plotted in a certain area of the graph. This means, there are patterns of gene expression within one subtype that differ generally from other subtypes. This proves clinic significance of the subtypes and enforces further analysis of the gene expression behavior.
