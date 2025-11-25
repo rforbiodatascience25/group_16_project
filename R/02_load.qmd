@@ -3,7 +3,24 @@ title: "02_load"
 format: html
 ---
 
+```{r}
+library(GEOquery)
+```
+
 # Load Data
+
+```{r}
+if (file.exists("../data/GSE45827_expression.csv")) {
+  expr_data <- read.csv("../data/GSE45827_expression.csv", row.names = 1)
+}
+if (file.exists("../data/GSE45827_Phenotype_metadata.csv")) {
+  pheno_data <- read.csv("../data/GSE45827_Phenotype_metadata.csv", row.names = 1)
+}
+if (file.exists("../data/GSE45827_Sample_metadata.csv")) {
+  feature_data <- read.csv("../data/GSE45827_Sample_metadata.csv", row.names = 1)
+}
+
+```
 
 ```{r}
 raw_file <- "../data/_raw/GSE45827.RData"
@@ -43,4 +60,8 @@ if (!file.exists("../data/GSE45827_Phenotype_metadata.csv")) {
 if (!file.exists("../data/GSE45827_Sample_metadata.csv")) {
   write.csv(feature_data, "../data/GSE45827_Sample_metadata.csv")
 }
+```
+
+```{r}
+expr_data
 ```

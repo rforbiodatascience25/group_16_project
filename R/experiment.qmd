@@ -1,0 +1,133 @@
+---
+title: "02_load"
+format: html
+---
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(igraph)
+library(ggraph)
+```
+
+# Load Data
+
+```{r}
+raw_file <- "../data/_raw/GSE45827.RData"
+load(raw_file)
+```
+
+# Split Raw Data into 3 main Data Frames
+
+-   Gene expression Data
+
+-   Sample Metadata
+
+-   Gene Metadata
+
+```{r}
+exprSet <- gse[[1]]
+
+# Expression data
+expr_data <- exprs(exprSet)
+
+# Phenotype / sample metadata
+pheno_data <- pData(exprSet)
+
+# Feature (gene) metadata
+feature_data <- fData(exprSet)
+```
+
+# Save Data Frames into csv files
+
+```{r}
+if (!file.exists("../data/GSE45827_expression.csv")) {
+  write.csv(expr_data, "../data/GSE45827_expression.csv")
+}
+if (!file.exists("../data/GSE45827_Phenotype_metadata.csv")) {
+  write.csv(pheno_data, "../data/GSE45827_Phenotype_metadata.csv")
+}
+if (!file.exists("../data/GSE45827_Sample_metadata.csv")) {
+  write.csv(feature_data, "../data/GSE45827_Sample_metadata.csv")
+}
+```
+
+# Build network
+
+## Compute Correlation Matrix
+
+```{r}
+gene_cor <- cor(t(expr_data), method = "pearson")
+```
+
+```{r}
+save(gene_cor, file = "../data/Gene_Corr_Matrix.RData")
+
+```
+
+```{r}
+load("../data/Gene_Corr_Matrix.RData")
+```
+
+```{r}
+df <- gene_cor#[1:100,1:100]
+```
+
+```{r}
+df <- data.frame(df)
+```
+
+```{r}
+df
+```
+
+```{r}
+names(df) <- sub("^X", "", names(df))
+
+long_df <- df |> 
+  mutate(Row = rownames(df))|>
+  pivot_longer(
+    cols = -Row,                        # pivot all columns except Row
+    names_to = "Column",                # new column with original column names
+    values_to = "Corr"                  # new column with correlation values
+  )
+```
+
+```{r}
+threshold <- 0.8
+
+filtered_df <- long_df |> 
+        filter(Corr > threshold | Corr < -threshold) |>
+        filter(Row != Column) |> 
+        filter(Row < Column)
+```
+
+```{r}
+save(filtered_df, file = "../data/Significant_Corr.RData")
+
+```
+
+```{r}
+filtered_df
+```
+
+```{r}
+g <- graph_from_data_frame(filtered_df)
+```
+
+```{r}
+plot(g, vertex.label = NA)
+```
+
+```{r}
+plot <- g |> 
+  ggraph(layout = "fr")
+```
+
+```{r}
+plot +
+  geom_edge_link(width = 1, aes(alpha = abs(Corr)*5)) +
+  geom_node_point(size = 0.05) +
+  theme_void()
+```

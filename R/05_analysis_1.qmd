@@ -1,0 +1,173 @@
+---
+title: "magda"
+format: html
+editor: visual
+---
+
+# Load Libraries
+
+```{r}
+library(limma)
+library(dplyr)
+library(msigdbr)
+library(fgsea)
+library(DESeq2)
+library(purrr)
+library(ggplot2)
+```
+
+# Clear Data
+
+```{r}
+group_data_vector <- as.character(pheno_data$tumor.subtype.ch1)
+
+samples_to_keep <- which(
+  group_data_vector == "Basal" | 
+  group_data_vector == "Her2" |
+  group_data_vector == "Luminal A" |
+  group_data_vector == "Luminal B"
+)
+
+pheno_data_filtered <- pheno_data[samples_to_keep, ]
+expr_data_filtered <- expr_data[, samples_to_keep]
+
+groups <- as.factor(pheno_data_filtered$tumor.subtype.ch1)
+
+print(length(samples_to_keep))
+print(levels(groups))
+```
+
+# Linear Modeling and Differential Expression Analysis
+
+```{r}
+design <- model.matrix(~ 0 + groups)
+
+clean_levels <- make.names(levels(groups))
+colnames(design) <- clean_levels
+
+fit <- lmFit(expr_data_filtered, design)
+
+contrast_matrix <- makeContrasts(
+  Basal_vs_Her2 = Basal - Her2,
+  Basal_vs_LumA = Basal - Luminal.A,
+  Her2_vs_LumA = Her2 - Luminal.A,
+  LumA_vs_LumB = Luminal.A - Luminal.B,
+  levels = design
+)
+
+fit_contrast <- contrasts.fit(fit, contrast_matrix)
+fit_ebayes <- eBayes(fit_contrast)
+
+print(summary(decideTests(fit_ebayes)))
+```
+
+# Preparing the Gene List
+
+```{r}
+top_table <- topTable(fit_ebayes, coef = "Basal_vs_LumA", number = Inf)
+
+head(top_table)
+
+top_table$probe_id <- rownames(top_table)
+
+probe_to_gene_map <- data.frame(
+  probe_id = rownames(feature_data),
+  gene_symbol = feature_data$"Gene.Symbol")
+
+res_with_symbols <- merge(top_table, probe_to_gene_map, by="probe_id")
+
+res_with_symbols <- res_with_symbols %>%
+  filter(!is.na(t) & !is.na(gene_symbol) & gene_symbol != "")
+
+res_ranked <- res_with_symbols %>%
+  group_by(gene_symbol) %>%
+  slice_max(order_by = abs(t), n = 1) %>%
+  ungroup()
+
+stats <- res_ranked$t
+names(stats) <- res_ranked$gene_symbol
+
+stats <- sort(stats, decreasing = TRUE)
+
+head(stats)
+```
+
+# Running GSEA
+
+```{r}
+BP_df <- msigdbr(species = "human", category = "C5", subcategory = "BP")
+
+pathways <- split(BP_df$gene_symbol, f = BP_df$gs_name)
+
+fgseaRes <- fgseaMultilevel(
+  pathways = pathways,
+  stats    = stats,
+  minSize  = 15,
+  maxSize  = 500
+)
+
+print("Top GSEA results (Basal_vs_LumA):")
+head(fgseaRes[order(padj), ])
+```
+
+# The Enrichment Plot
+
+```{r}
+fgseaRes_ordered <- fgseaRes[order(padj), ]
+
+top_pathway_name <- fgseaRes_ordered$pathway[1]
+leading_edge_genes <- fgseaRes_ordered$leadingEdge[[1]]
+first_genes <- head(leading_edge_genes,10)
+print(first_genes)
+
+plotEnrichment(pathways[[top_pathway_name]],
+               stats = stats) +
+  labs(title = top_pathway_name)
+```
+
+# Getting the Top Genes
+
+```{r}
+top_5_gene_lists <- fgseaRes_ordered$leadingEdge[1:5]
+
+top_5_names <- fgseaRes_ordered$pathway[1:5]
+
+for (i in 1:5) {
+  print(head(top_5_gene_lists[[i]], 10))
+}
+```
+
+# Intersection Analysis of Core Enrichment Genes
+
+```{r}
+core_drivers <- Reduce(intersect, top_5_gene_lists)
+
+all_genes_flat <- unlist(top_5_gene_lists)      
+gene_counts <- table(all_genes_flat)      
+gene_counts_sorted <- sort(gene_counts, decreasing = TRUE) 
+
+res <- gene_counts_sorted[gene_counts_sorted >= 3]
+```
+
+# Saving Results
+
+```{r}
+fgseaRes_flat <- fgseaRes
+
+fgseaRes_flat$leadingEdge <- sapply(fgseaRes_flat$leadingEdge, paste, collapse = "; ")
+
+write.csv(fgseaRes_flat, "../data/Top_GSEA_results_Basal_vs_LumA.csv", row.names = FALSE)
+
+
+top_5_gene_df <- map_dfr(top_5_gene_lists, ~as.data.frame(t(.x), .id="id"))
+write.csv(top_5_gene_df, "../data/Genes_from_Top_5_pathways.csv")
+write.csv(res, "../data/Intersected_Genes.csv", row.names = FALSE)
+
+my_plot <- plotEnrichment(pathways[[top_pathway_name]], stats = stats) +
+           labs(title = top_pathway_name)
+
+ggsave(filename = "../results/Intersected_Genes_Plot.png", 
+       plot = my_plot, 
+       width = 8, 
+       height = 6)
+```
