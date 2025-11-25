@@ -4,16 +4,7 @@ format: html
 ---
 
 ```{r}
-############################################################
-# COMPLETE NETWORK ANALYSIS PIPELINE
-# From GEO data download to network visualization
-# Author: (you)
-# Dataset: GSE45827 (Breast cancer)
-############################################################
-
-# =========================
-# 1. INSTALL & LOAD PACKAGES
-# =========================
+# Installing/loading all the basics
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
@@ -44,54 +35,34 @@ suppressPackageStartupMessages({
   library(Matrix)
 })
 
-# =========================
-# 2. DOWNLOAD DATA FROM GEO
-# =========================
-cat("Downloading GSE45827 from GEO...\n")
-gse <- getGEO("GSE45827", GSEMatrix = TRUE)
-exprSet <- gse[[1]]
+# Loading the CSV files with the data
+expr_data <- read.csv("../data/GSE45827_expression.csv", row.names = 1)
+pheno_data <- read.csv("../data/GSE45827_Phenotype_metadata.csv", row.names = 1)
+feature_data <- read.csv("../data/GSE45827_Sample_metadata.csv", row.names = 1)
 
-expr_data <- exprs(exprSet)
-pheno_data <- pData(exprSet)
-feature_data <- fData(exprSet)
-
-cat("Data downloaded. Samples:", ncol(expr_data), "Probes:", nrow(expr_data), "\n")
+output_dir <- "."
 ```
 
 ```{r}
-# Loading the libraries
-suppressPackageStartupMessages({
-  library(GEOquery)
-  library(Biobase)
-  library(limma)
-  library(dplyr)
-  library(tibble)
-  library(stringr)
-  library(readr)
-  library(igraph)
-  library(msigdbr)
-  library(clusterProfiler)
-  library(org.Hs.eg.db)
-  library(Matrix)
-})
+# ----- Data cleaning and preparation for downstream analyses -----
 
-# =========================
-# CLEAN PHENOTYPE DATA
-# =========================
-
+# 1) Cleaning phenotype data: SampleID, group (Tumor vs Normal) and subtype
 pheno_clean <- pheno_data %>%
   as.data.frame() %>%
   tibble::rownames_to_column("SampleID") %>%
   mutate(
+    # Combining the descriptive text fields into one string per sample
     combined_text = apply(
       dplyr::select(., any_of(c("title", "source_name_ch1",
-                                 "characteristics_ch1", "characteristics_ch1.1"))),
+                                "characteristics_ch1", "characteristics_ch1.1"))),
       1, function(x) paste(na.omit(x), collapse = " | ")
     ),
+    # Binary grouping for DE contrast
     group = if_else(
       str_detect(combined_text, regex("\\bNormal\\b", ignore_case = TRUE)),
       "Normal", "Tumor"
     ),
+    # Molecular subtype labels
     subtype = case_when(
       str_detect(combined_text, regex("\\bBasal\\b", TRUE)) ~ "Basal",
       str_detect(combined_text, regex("\\bHER2\\b|\\bHer2\\b", TRUE)) ~ "HER2",
@@ -102,104 +73,95 @@ pheno_clean <- pheno_data %>%
     )
   ) %>%
   dplyr::select(SampleID, group, subtype) %>%
+  # Dropping samples without a clear group assignment
   filter(!is.na(group))
 
-# =========================
-# CLEAN FEATURE DATA
-# =========================
-
-feat_keep <- c("ProbeID", "ID", "Representative Public ID",
-               "Gene Symbol", "Gene Title", "ENTREZ_GENE_ID", "RefSeq Transcript ID")
+# 2) Cleaning feature data: keeps relevant annotation columns and removes control probes
+feat_keep <- c("ProbeID", "ID", "Representative.Public.ID",
+               "Gene.Symbol", "Gene.Title", "ENTREZ_GENE_ID", "RefSeq.Transcript.ID")
 
 feature_clean <- feature_data %>%
   as.data.frame() %>%
   tibble::rownames_to_column("ProbeID") %>%
+  # Keeping only relevant annotation columns
   dplyr::select(any_of(feat_keep)) %>%
+  # Using ID if available, otherwise falling back to ProbeID
   mutate(ID_check = coalesce(`ID`, ProbeID)) %>%
+  # Removing the Affymetrix control probes (AFFX*), which are technical controls
+  # they add noise to DE and network analyses
   filter(!str_detect(ID_check, regex("^AFFX", TRUE))) %>%
   dplyr::select(-ID_check)
 
-# =========================
-# SUBSET EXPRESSION DATA
-# =========================
-
+# 3) New expression matrix with cleaned probes and samples
 expr_clean <- expr_data[
   rownames(expr_data) %in% feature_clean$ProbeID,
   colnames(expr_data) %in% pheno_clean$SampleID,
   drop = FALSE
 ]
 
-# Align all three objects
-expr_data <- expr_clean
-pheno_data <- pheno_clean
+# 4) Replacing the raw objects with their cleaned versions
+expr_data   <- expr_clean
+pheno_data  <- pheno_clean
 feature_data <- feature_clean
 
-# =========================
-# DIFFERENTIAL EXPRESSION (TUMOR vs NORMAL)
-# =========================
-
-# Ensure proper alignment
+# 5) Ensuring the phenotype rows are in the same order as the expression columns
 stopifnot(all(colnames(expr_data) %in% pheno_data$SampleID))
 pheno_data <- pheno_data[match(colnames(expr_data), pheno_data$SampleID), ]
 
-# Setup design matrix
+
+# 6) Setting up the design matrix for Tumor vs Normal comparison
 ph_all <- pheno_data %>%
   mutate(group = factor(group, levels = c("Normal", "Tumor")))
 
 design_all <- model.matrix(~ group, data = ph_all)
+```
 
-# Run limma
+```{r}
+# ----- Differential expression analysis (Tumor vs Normal) -----
+
+# 1) Running limma DE analysis with Bayes correction for noisy data (variance and p-values)
 fit_all <- lmFit(expr_data, design_all) %>% eBayes()
 tt_tumor_vs_normal <- topTable(fit_all, coef = "groupTumor", 
                                 number = Inf, sort.by = "P")
 
-# Annotate with gene symbols
+# 2) Annotating the probes of DE analysis with gene symbols from clean feature data
 tt_tumor_vs_normal <- tt_tumor_vs_normal %>%
   rownames_to_column("ProbeID") %>%
-  left_join(feature_data %>% dplyr::select(ProbeID, `Gene Symbol`), 
+  left_join(feature_data %>% dplyr::select(ProbeID, `Gene.Symbol`), 
             by = "ProbeID") %>%
-  relocate(`Gene Symbol`, .after = ProbeID)
+  relocate(`Gene.Symbol`, .after = ProbeID)
 
-cat("DE analysis complete. Significant genes (FDR<0.05, |logFC|>1):", 
+cat("DE analysis is completed. Number of significant genes (FDR<0.05, |logFC|>1):", 
     sum(tt_tumor_vs_normal$adj.P.Val < 0.05 & abs(tt_tumor_vs_normal$logFC) > 1), "\n")
 
-# Store in list format
+# 3) Storing the results in list format
 DE_results <- list(
   Tumor_vs_Normal = tt_tumor_vs_normal
 )
+```
 
-# =========================
-# NETWORK ANALYSIS HELPER FUNCTIONS
-# =========================
+```{r}
+# ----- Network Analysis -----
 
-# Collapse probe-level DE to gene-level DE
+# A) Helper functions
+
+# 1) Collapsing probe-level DE to gene-level DE (proper network symbols and enrichment analysis)
 collapse_to_genes <- function(tt, feature_tbl) {
   tt <- as_tibble(tt)
   feature_tbl <- as_tibble(feature_tbl)
   
   tt %>%
     dplyr::select(ProbeID, logFC, t, P.Value, adj.P.Val) %>%
-    dplyr::left_join(feature_tbl %>% dplyr::select(ProbeID, `Gene Symbol`), 
+    dplyr::left_join(feature_tbl %>% dplyr::select(ProbeID, `Gene.Symbol`), 
                      by = "ProbeID") %>%
-    dplyr::filter(!is.na(`Gene Symbol`) & `Gene Symbol` != "") %>%
-    dplyr::group_by(`Gene Symbol`) %>%
+    dplyr::filter(!is.na(`Gene.Symbol`) & `Gene.Symbol` != "") %>%
+    dplyr::group_by(`Gene.Symbol`) %>%
     dplyr::slice_min(order_by = adj.P.Val, n = 1, with_ties = FALSE) %>%
     dplyr::ungroup() %>%
-    dplyr::rename(symbol = `Gene Symbol`)
+    dplyr::rename(symbol = `Gene.Symbol`)
 }
 
-# Convert SYMBOL → ENTREZ
-symbols_to_entrez <- function(symbols) {
-  symbols <- as.character(symbols)
-  suppressMessages(
-    bitr(symbols,
-         fromType = "SYMBOL",
-         toType   = "ENTREZID",
-         OrgDb    = org.Hs.eg.db)
-  ) %>% distinct(SYMBOL, .keep_all = TRUE)
-}
-
-# Pick DE seeds
+# 2) Picking DE seeds (strongly differentially expressed genes)
 pick_seeds <- function(tt_gene, fdr = 0.01, lfc = 1.5, top_n = NULL) {
   seeds <- tt_gene %>%
     filter(adj.P.Val < fdr & abs(logFC) >= lfc) %>%
@@ -210,22 +172,23 @@ pick_seeds <- function(tt_gene, fdr = 0.01, lfc = 1.5, top_n = NULL) {
   seeds
 }
 
-# Network plot
-# Helper: define hubs as top 10% by degree
+# 3) Defining hubs as top 10% by degree
 get_hub_logical <- function(g, q = 0.90) {
   deg <- degree(g)
   thr <- stats::quantile(deg, probs = q, na.rm = TRUE)
   deg >= thr
 }
 
-# Figure 1A: modules + hubs (hubs circled in black)
+# 4) Creating the louvain graph
 plot_net_modules_hubs <- function(g, tag, output_dir, lay = NULL) {
+  
+  # presetting the layout
   if (is.null(lay)) {
     set.seed(1)
     lay <- layout_with_fr(g)
   }
   
-  # node size = degree (hubs larger naturally)
+  # node size scaled by degree
   deg <- degree(g)
   deg_min <- min(deg); deg_max <- max(deg)
   if (deg_max > deg_min) {
@@ -234,7 +197,7 @@ plot_net_modules_hubs <- function(g, tag, output_dir, lay = NULL) {
     V(g)$size <- 8
   }
   
-  # node fill = module
+  # coloring nodes by module
   modules <- sort(unique(V(g)$module))
   pal <- rainbow(length(modules))
   V(g)$color <- pal[match(V(g)$module, modules)]
@@ -243,7 +206,7 @@ plot_net_modules_hubs <- function(g, tag, output_dir, lay = NULL) {
   hubs <- get_hub_logical(g, q = 0.90)
   V(g)$frame.color <- ifelse(hubs, "black", NA)
   
-  # edges by weight (as before)
+  # edges by weight
   ew <- E(g)$weight
   ew_min <- min(ew); ew_max <- max(ew)
   if (ew_max > ew_min) {
@@ -266,7 +229,7 @@ plot_net_modules_hubs <- function(g, tag, output_dir, lay = NULL) {
   dev.off()
 }
 
-# Figure 1B: DE categories (green/red/grey) + hubs circled in black
+# 5) Creating the up/downregulation graph
 plot_net_DE_3cat <- function(g, tag, output_dir, lay = NULL,
                              fdr_cut = 0.05, lfc_cut = 1) {
   if (is.null(lay)) {
@@ -274,7 +237,7 @@ plot_net_DE_3cat <- function(g, tag, output_dir, lay = NULL,
     lay <- layout_with_fr(g)
   }
   
-  # define DE categories
+  # defining DE categories (up/non/down) using thresholds
   adj <- V(g)$adj.P.Val
   lfc <- V(g)$logFC
   
@@ -282,7 +245,7 @@ plot_net_DE_3cat <- function(g, tag, output_dir, lay = NULL,
   sig_down <- !is.na(adj) & adj < fdr_cut & lfc <= -lfc_cut
   non_sig  <- !(sig_up | sig_down)
   
-  # node size = degree (for some structure)
+  # node size scaled by degree
   deg <- degree(g)
   deg_min <- min(deg); deg_max <- max(deg)
   if (deg_max > deg_min) {
@@ -291,17 +254,17 @@ plot_net_DE_3cat <- function(g, tag, output_dir, lay = NULL,
     V(g)$size <- 8
   }
   
-  # node fill color = DE category
-  col_vec <- rep("grey70", vcount(g))   # default = non-significant
+  # coloring nodes by DE result
+  col_vec <- rep("grey70", vcount(g))   # non-significant
   col_vec[sig_up]   <- "green"          # upregulated
   col_vec[sig_down] <- "red"            # downregulated
   V(g)$color <- col_vec
   
-  # hubs (same definition), circled in black
+  # hubs turn bigger and circled with black color
   hubs <- get_hub_logical(g, q = 0.90)
   V(g)$frame.color <- ifelse(hubs, "black", NA)
   
-  # edges very light & uniform (no module info)
+  # edges appear very light & uniform
   E(g)$color <- "grey85"
   E(g)$width <- 0.5
   
@@ -325,8 +288,171 @@ plot_net_DE_3cat <- function(g, tag, output_dir, lay = NULL,
   dev.off()
 }
 
-# Reactome enrichment for module nodes (ORA via msigdbr + enricher)
-# Precompute Reactome TERM2GENE for ORA
+# B) Running the network analysis
+
+# 1) Choosing the contrast of the analysis
+tag <- "Tumor_vs_Normal"
+
+# 2) Collapsing DE probes to genes and reporting results
+tt_gene <- collapse_to_genes(DE_results[[tag]], feature_data)
+universe_symbols <- tt_gene$symbol
+seeds <- pick_seeds(tt_gene, fdr = 0.01, lfc = 1.5)
+
+cat("Universe genes:", length(universe_symbols), "\n")
+cat("Seed genes:", length(seeds), "\n")
+
+# 3) Getting the Reactome pathway membership
+reactome_df <- msigdbr(
+  species = "Homo sapiens",
+  category = "C2",
+  subcategory = "REACTOME"
+) %>%
+  dplyr::select(gs_name, gene_symbol) %>%
+  distinct() %>%
+  filter(gene_symbol %in% universe_symbols)
+  
+  # Only Reactome pathways relevant to the dataset
+cat("Reactome pathways covering universe:", length(unique(reactome_df$gs_name)), "\n")
+
+# 4) Building a gene-gene co-membership matrix (discovering strong functional connection of genes pathway-wise)
+  # Extracting list of genes and pathways
+genes <- sort(unique(reactome_df$gene_symbol))
+paths <- sort(unique(reactome_df$gs_name))
+  # Converting gene symbols to row numbers and pathway names to column numbers
+gi <- match(reactome_df$gene_symbol, genes)
+pi <- match(reactome_df$gs_name, paths)
+
+  # Building the gene / pathway incidence matrix
+Inc <- sparseMatrix(
+  i = gi,
+  j = pi,
+  x = 1,
+  dims = c(length(genes), length(paths)),
+  dimnames = list(genes, paths)
+)
+  # Creating the final gene x gene co-membership matrix
+Adj <- Inc %*% t(Inc)
+diag(Adj) <- 0
+
+# 5) Filtering the network and building edges
+  # Threshold for keeping only edges between genes that share at least 2 Reactome pathways
+min_shared <- 2
+  # Finding the location of seeds in the previous matrix
+seed_idx <- which(rownames(Adj) %in% seeds)
+  # Finding also the seed neighbors
+nbr_raw <- Adj[seed_idx, , drop = FALSE] > 0
+
+if (length(seed_idx) == 1) {
+  nbr_idx <- which(as.vector(nbr_raw))
+} else {
+  nbr_idx <- unique(unlist(apply(nbr_raw, 1, which)))
+}
+  # Indices of all genes that share at least 1 Reactome pathway with at least one seed
+  # basically a list of all genes in a "seed neighborhood"
+nbr_idx <- unique(c(seed_idx, nbr_idx))
+
+  # Submatrix of the adjacency that only includes seeds, neighbors and their connection strength
+Adj_sub <- Adj[nbr_idx, nbr_idx, drop = FALSE]
+
+  # Turning the sub-adjacency into an edge list
+A <- summary(Adj_sub)
+A <- A[A$i < A$j & A$x >= min_shared, , drop = FALSE]
+
+  # Tibble of edges
+edges <- tibble(
+  from   = rownames(Adj_sub)[A$i],
+  to     = rownames(Adj_sub)[A$j],
+  weight = as.numeric(A$x)
+)
+
+# 6) Building the igraph object
+  # Building the igraph object from the edge list
+node_syms <- sort(unique(c(edges$from, edges$to)))
+g <- graph_from_data_frame(
+  d = edges,
+  vertices = tibble(symbol = node_syms),
+  directed = FALSE
+)
+  # Preparing DE info by gene
+sym2 <- tt_gene %>%
+  dplyr::select(symbol, logFC, adj.P.Val) %>%
+  distinct()
+
+  # Attaching attributes to graph nodes
+V(g)$symbol     <- V(g)$name
+V(g)$seed       <- V(g)$symbol %in% seeds
+V(g)$logFC      <- sym2$logFC[match(V(g)$symbol, sym2$symbol)]
+V(g)$adj.P.Val  <- sym2$adj.P.Val[match(V(g)$symbol, sym2$symbol)]
+  
+  # Cleaning up the graph: merging duplicates & removing loops
+g <- igraph::simplify(g, remove.multiple = TRUE, remove.loops = TRUE,
+              edge.attr.comb = list(weight = "sum"))
+
+# 7) Community detection (Louvain)
+com <- cluster_louvain(g, weights = E(g)$weight)
+V(g)$module <- membership(com)
+
+  # Keeping only the largest connected component
+comp <- components(g)
+gc_id <- which.max(comp$csize)
+g <- induced_subgraph(g, vids = which(comp$membership == gc_id))
+
+  # Reporting some summary stats
+cat("Final network - Nodes:", gorder(g), "Edges:", gsize(g), "\n")
+cat("Modules detected:", length(unique(V(g)$module)), "\n")
+
+# 8) Plotting the network graphs
+plot_net_modules_hubs(g, tag, output_dir)   # Louvain graph
+plot_net_DE_3cat(g, tag, output_dir)        # Up/non/down regulation graph
+
+# 9) Exporting nodes important information for ORA and top nodes extraction
+nodes_out <- tibble(
+  symbol      = V(g)$symbol,
+  seed        = V(g)$seed,
+  module      = V(g)$module,
+  degree      = degree(g),
+  strength    = strength(g, vids = V(g), weights = E(g)$weight),
+  betweenness = betweenness(g, directed = FALSE, normalized = TRUE),
+  logFC       = V(g)$logFC,
+  adj.P.Val   = V(g)$adj.P.Val
+)
+
+# 10) Calculating the size of each module and how many DE genes it contains
+mod_DE_info <- nodes_out %>%
+  group_by(module) %>%
+  summarise(
+    module_size = n(),                                   # number of genes in module
+    n_DE        = sum(adj.P.Val < 0.05, na.rm = TRUE),  # DE genes in module
+    .groups     = "drop"
+  )
+
+# 11) Reporting general and useful network statistics:
+cat("\nNetwork statistics:\n")
+cat("  Total nodes:", gorder(g), "\n")
+cat("  Total edges:", gsize(g), "\n")
+cat("  Seed nodes:", sum(V(g)$seed), "\n")
+cat("  Modules:", length(unique(V(g)$module)), "\n")
+cat("  Density:", edge_density(g), "\n")
+cat("  Transitivity:", transitivity(g), "\n")
+```
+
+```{r}
+# ----- ORA analysis -----
+  # Giving biological meaning to notable network nodes 
+
+# 1) Helper function for converting gene symbols to ENTREZ IDs (crucial for ORA analysis)
+symbols_to_entrez <- function(symbols) {
+  symbols <- as.character(symbols)
+  suppressMessages(
+    bitr(symbols,
+         fromType = "SYMBOL",
+         toType   = "ENTREZID",
+         OrgDb    = org.Hs.eg.db)
+  ) %>% distinct(SYMBOL, .keep_all = TRUE)
+}
+
+# 2) Reactome enrichment for module nodes (ORA via msigdbr + enricher)
+  # Precomputing Reactome with TERM2GENE for ORA
 reactome_t2g <- msigdbr(
   species = "Homo sapiens",
   category = "C2",
@@ -335,6 +461,7 @@ reactome_t2g <- msigdbr(
   dplyr::select(term = gs_name, gene = entrez_gene) %>%
   distinct()
 
+# 3) Helper function for running ORA analysis (hypergeometric test)
 enrich_module <- function(genes_symbol, universe_symbol, tag, mod_id, output_dir) {
   if (length(genes_symbol) < 5) return(invisible(NULL))
   
@@ -353,245 +480,130 @@ enrich_module <- function(genes_symbol, universe_symbol, tag, mod_id, output_dir
     pAdjustMethod = "BH",
     qvalueCutoff  = 0.05
   )
-  
-  #if (!is.null(reactome_enrich) && nrow(as.data.frame(reactome_enrich)) > 0)
-   # write_csv(
-    #  as.data.frame(reactome_enrich),
-     # file.path(output_dir, paste0(tag, "_module", mod_id, "_REACTOME.csv"))
-    #)
 }
 
-# =========================
-# 8. RUN NETWORK ANALYSIS
-# =========================
-
-# Create output directory
-output_dir <- "results_network"
-dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-
-# Choose contrast
-tag <- "Tumor_vs_Normal"
-
-# 1) Collapse DE to genes
-tt_gene <- collapse_to_genes(DE_results[[tag]], feature_data)
-universe_symbols <- tt_gene$symbol
-seeds <- pick_seeds(tt_gene, fdr = 0.01, lfc = 1.5)
-
-cat("Universe genes:", length(universe_symbols), "\n")
-cat("Seed genes:", length(seeds), "\n")
-
-if (length(seeds) < 2)
-  stop("Too few seed genes. Lower thresholds.")
-
-# 2) Get Reactome pathway membership
-cat("\nFetching Reactome pathways...\n")
-reactome_df <- msigdbr(
-  species = "Homo sapiens",
-  category = "C2",
-  subcategory = "REACTOME"
-) %>%
-  dplyr::select(gs_name, gene_symbol) %>%
-  distinct() %>%
-  filter(gene_symbol %in% universe_symbols)
-
-if (nrow(reactome_df) == 0)
-  stop("No Reactome overlap with universe genes.")
-
-cat("Reactome pathways covering universe:", length(unique(reactome_df$gs_name)), "\n")
-
-# 3) Build gene-gene co-membership matrix
-genes <- sort(unique(reactome_df$gene_symbol))
-paths <- sort(unique(reactome_df$gs_name))
-
-gi <- match(reactome_df$gene_symbol, genes)
-pi <- match(reactome_df$gs_name, paths)
-
-Inc <- sparseMatrix(
-  i = gi,
-  j = pi,
-  x = 1,
-  dims = c(length(genes), length(paths)),
-  dimnames = list(genes, paths)
-)
-
-Adj <- Inc %*% t(Inc)
-diag(Adj) <- 0
-
-# 4) Filter network around seeds
-min_shared <- 2
-
-seed_idx <- which(rownames(Adj) %in% seeds)
-if (length(seed_idx) == 0)
-  stop("Seeds not present in Reactome set.")
-
-nbr_raw <- Adj[seed_idx, , drop = FALSE] > 0
-
-if (length(seed_idx) == 1) {
-  nbr_idx <- which(as.vector(nbr_raw))
-} else {
-  nbr_idx <- unique(unlist(apply(nbr_raw, 1, which)))
-}
-nbr_idx <- unique(c(seed_idx, nbr_idx))
-
-Adj_sub <- Adj[nbr_idx, nbr_idx, drop = FALSE]
-
-A <- summary(Adj_sub)
-A <- A[A$i < A$j & A$x >= min_shared, , drop = FALSE]
-
-edges <- tibble(
-  from   = rownames(Adj_sub)[A$i],
-  to     = rownames(Adj_sub)[A$j],
-  weight = as.numeric(A$x)
-)
-
-if (nrow(edges) == 0)
-  stop("No edges after filtering. Reduce min_shared to 1.")
-
-# 5) Build igraph object
-node_syms <- sort(unique(c(edges$from, edges$to)))
-g <- graph_from_data_frame(
-  d = edges,
-  vertices = tibble(symbol = node_syms),
-  directed = FALSE
-)
-
-sym2 <- tt_gene %>%
-  dplyr::select(symbol, logFC, adj.P.Val) %>%
-  distinct()
-
-V(g)$symbol     <- V(g)$name
-V(g)$seed       <- V(g)$symbol %in% seeds
-V(g)$logFC      <- sym2$logFC[match(V(g)$symbol, sym2$symbol)]
-V(g)$adj.P.Val  <- sym2$adj.P.Val[match(V(g)$symbol, sym2$symbol)]
-
-g <- igraph::simplify(g, remove.multiple = TRUE, remove.loops = TRUE,
-              edge.attr.comb = list(weight = "sum"))
-
-# 6) Community detection (Louvain)
-com <- cluster_louvain(g, weights = E(g)$weight)
-V(g)$module <- membership(com)
-
-# Keep largest connected component
-comp <- components(g)
-gc_id <- which.max(comp$csize)
-g <- induced_subgraph(g, vids = which(comp$membership == gc_id))
-
-cat("Final network - Nodes:", gorder(g), "Edges:", gsize(g), "\n")
-cat("Modules detected:", length(unique(V(g)$module)), "\n")
-
-# 7) Plot network
-cat("\nGenerating network visualizations (Figure 1A & 1B)...\n")
-set.seed(1)
-layout_fr <- layout_with_fr(g)
-
-plot_net_modules_hubs(g, tag, output_dir, lay = layout_fr)   # Figure 1A
-plot_net_DE_3cat(g, tag, output_dir, lay = layout_fr)        # Figure 1B
-
-# 8) Export node and edge tables
-nodes_out <- tibble(
-  symbol      = V(g)$symbol,
-  seed        = V(g)$seed,
-  module      = V(g)$module,
-  degree      = degree(g),
-  strength    = strength(g, vids = V(g), weights = E(g)$weight),
-  betweenness = betweenness(g, directed = FALSE, normalized = TRUE),
-  logFC       = V(g)$logFC,
-  adj.P.Val   = V(g)$adj.P.Val
-)
-
-edges_out <- as_tibble(igraph::as_data_frame(g, what = "edges"))
-
-#(nodes_out, file.path(output_dir, paste0(tag, "_nodes.csv")))
-#write_csv(edges_out, file.path(output_dir, paste0(tag, "_edges.csv")))
-
-############################################################
-#  TOP HUBS, TOP UP, TOP DOWN (RANKED LISTS)
-############################################################
-
-# ---------- TOP 20 HUBS (by strength) ----------
-top20_hubs <- nodes_out %>%
-  arrange(desc(strength)) %>%
-  slice_head(n = 20) %>%
-  mutate(rank = row_number())
-
-#write_csv(top20_hubs, file.path(output_dir, paste0(tag, "_top20_hubs.csv")))
-
-# ---------- TOP 10 UPREGULATED genes ----------
-top10_up <- nodes_out %>%
-  filter(!is.na(logFC) & logFC > 0 &
-         !is.na(adj.P.Val) & adj.P.Val < 0.05) %>%
-  arrange(desc(logFC)) %>%
-  slice_head(n = 10) %>%
-  mutate(rank = row_number())
-
-#write_csv(top10_up, file.path(output_dir, paste0(tag, "_top10_upregulated.csv")))
-
-# ---------- TOP 10 DOWNREGULATED genes ----------
-top10_down <- nodes_out %>%
-  filter(!is.na(logFC) & logFC < 0 &
-         !is.na(adj.P.Val) & adj.P.Val < 0.05) %>%
-  arrange(logFC) %>%  # ascending = most negative first
-  slice_head(n = 10) %>%
-  mutate(rank = row_number())
-
-#write_csv(top10_down, file.path(output_dir, paste0(tag, "_top10_downregulated.csv")))
-
-# 9) Module enrichment analysis
+# 4) Running ORA (Reactome enrichment) for each network module
 mods <- sort(unique(V(g)$module))
-for (m in mods) {
-  cat("\nModule", m, "- genes:", sum(nodes_out$module == m), "\n")
+
+ora_results <- vector("list", length(mods))
+names(ora_results) <- paste0("Module_", mods)
+
+for (i in seq_along(mods)) {
+  m <- mods[i]
   mod_genes <- nodes_out$symbol[nodes_out$module == m]
-  enrich_module(mod_genes, universe_symbols, tag, mod_id = m, output_dir)
+  
+  res <- enrich_module(
+    genes_symbol    = mod_genes,
+    universe_symbol = universe_symbols,
+    tag             = tag,
+    mod_id          = m,
+    output_dir      = "."  # current working directory
+  )
+  
+  ora_results[[i]] <- res
 }
 
-# Get the top 40 genes (Top 20 Hubs, Top 10 Upregulated, Top 10 Downregulated)
-combined_40 <- bind_rows(
-  top20_hubs %>%
-    mutate(category = "Hub (Top 20)"),
-  top10_up %>%
-    mutate(category = "Upregulated (Top 10)"),
-  top10_down %>%
-    mutate(category = "Downregulated (Top 10)")
+# 5) Combining all ORA results into one data frame (for downstream enrichment analyses)
+module_enrich_df <- bind_rows(
+  lapply(seq_along(ora_results), function(i) {
+    res <- ora_results[[i]]
+    if (is.null(res)) return(NULL)
+    df <- as.data.frame(res)
+    if (nrow(df) == 0) return(NULL)
+    df$module <- mods[i]   # add module ID
+    df
+  })
 )
 
-# Collapse duplicates: if a gene appears in multiple groups,
-# merge categories into one string and keep unique metrics
-combined_40_dedup <- combined_40 %>%
-  group_by(symbol) %>%
-  dplyr::summarise(
-    category    = paste(sort(unique(category)), collapse = "; "),
-    module      = dplyr::first(module),
-    degree      = dplyr::first(degree),
-    strength    = dplyr::first(strength),
-    betweenness = dplyr::first(betweenness),
-    logFC       = dplyr::first(logFC),
-    adj.P.Val   = dplyr::first(adj.P.Val),
-    .groups     = "drop"
+# 6) Picking for each Louvain module a representative label (most significant pathway)
+ # The main biological pathway that is most strongly enriched in the group of genes (module)
+module_summary <- module_enrich_df %>%
+  group_by(module) %>%
+  summarise(
+    n_sig_pathways = n(),
+    top_term       = Description[which.min(p.adjust)],
+    top_q          = min(p.adjust),
+    .groups = "drop"
+  )
+
+# 7) Adding module size and DE gene counts, then sorting by significance
+module_summary <- module_summary %>%
+  left_join(mod_DE_info, by = "module") %>%
+  arrange(top_q)
+
+# 8) Human-readable module label from top Reactome term
+module_summary <- module_summary %>%
+  mutate(
+    module_label = str_replace_all(top_term, "^REACTOME_", ""),  # drop prefix
+    module_label = str_replace_all(module_label, "_", " ")
+  )
+
+# 9) Attach module_label back to nodes (for later inspection/plotting)
+nodes_out <- nodes_out %>%
+  left_join(module_summary %>% dplyr::select(module, module_label),
+            by = "module")
+
+
+# 10) Prioritising biologically meaningful modules
+key_modules <- module_summary %>%
+  filter(
+    n_sig_pathways >= 2,   # at least 2 enriched pathways
+    top_q < 0.05,          # reasonably strong enrichment
+    n_DE >= 3              # contains several DE genes
   ) %>%
-  mutate(strength = as.numeric(strength)) %>%
-  arrange(desc(strength)) %>%
-  dplyr::mutate(final_rank = row_number())
+  arrange(top_q)
 
-View(combined_40_dedup)
+  # The modules with significant pathways (biologically meaningful) ranked by top_q (strongest enrichment)
+key_modules %>% dplyr::select(module, module_size, n_sig_pathways, top_q)
 
-# Save to CSV
-write_csv(
-  combined_40_dedup,
-  file.path(output_dir, paste0(tag, "_top40_combined_ranked.csv"))
+  # Saving the key modules table in csv format
+readr::write_csv(
+  key_modules,
+  file.path(output_dir, paste0(tag, "_key_modules_ranked.csv"))
 )
-
-# =========================
-# SUMMARY
-# =========================
-
-cat("\nResults saved in:", output_dir, "\n")
-
-cat("\nNetwork statistics:\n")
-cat("  Total nodes:", gorder(g), "\n")
-cat("  Total edges:", gsize(g), "\n")
-cat("  Seed nodes:", sum(V(g)$seed), "\n")
-cat("  Modules:", length(mods), "\n")
-cat("  Density:", edge_density(g), "\n")
-cat("  Transitivity:", transitivity(g), "\n")
 ```
 
+```{r}
+# 1) Extracting nodes of particular interest:
+
+# ---------- Top 20 Hubs (by strength) ----------
+top20_hubs <- nodes_out %>%
+  arrange(desc(strength)) %>%
+  slice_head(n = 20)
+
+# ---------- Top 10 upregulated genes ----------
+top10_up <- nodes_out %>%
+  filter(!is.na(logFC), logFC > 0,
+         !is.na(adj.P.Val), adj.P.Val < 0.05) %>%
+  arrange(desc(logFC)) %>%
+  slice_head(n = 10)
+
+# ---------- Top 10 downregulated genes ----------
+top10_down <- nodes_out %>%
+  filter(!is.na(logFC), logFC < 0,
+         !is.na(adj.P.Val), adj.P.Val < 0.05) %>%
+  arrange(logFC) %>%
+  slice_head(n = 10)
+
+# ---------- Final top 40 genes ----------
+combined_40 <- bind_rows(
+  top20_hubs %>% mutate(category = "Hub (Top 20)"),
+  top10_up   %>% mutate(category = "Upregulated (Top 10)"),
+  top10_down %>% mutate(category = "Downregulated (Top 10)")
+) %>% arrange(desc(strength), desc(logFC))
+
+# 2) Checking for gene overlap between the hubs and regulated genes categories
+overlapping_genes <- combined_40 %>%
+  group_by(symbol) %>%
+  filter(n() > 1) %>%
+  ungroup()
+
+cat("There are", n_distinct(overlapping_genes$symbol),
+    "genes that appear in more than one top-40 category (hub/up/down).\n")
+
+# 3) Saving ranked top 40 in csv format
+write_csv(
+  combined_40,
+  file.path(output_dir, paste0(tag, "_top40_combined_ranked.csv"))
+)
+```
