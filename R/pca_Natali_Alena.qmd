@@ -13,13 +13,15 @@ format: html
 library(tidyverse)
 library(ggbiplot)
 library(devtools)
-
 ```
+
 ### Load Data
 
 ```{r}
 expr_data <- read.csv("../data/GSE45827_expression.csv", row.names = 1)
 pheno_data <- read.csv("../data/GSE45827_Phenotype_metadata.csv", row.names = 1)
+```
+
 ### Tidy Data
 
 ```{r}
