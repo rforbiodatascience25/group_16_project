@@ -406,8 +406,11 @@ plot_net_modules_hubs(g, tag, output_dir)   # Louvain graph
 plot_net_DE_3cat(g, tag, output_dir)        # Up/non/down regulation graph
 
 # 9) Exporting nodes important information for ORA and top nodes extraction
+hub_logical <- get_hub_logical(g, q = 0.90)  # Hubs = top 10% by degree
+
 nodes_out <- tibble(
   symbol      = V(g)$symbol,
+  hub         = hub_logical,
   seed        = V(g)$seed,
   module      = V(g)$module,
   degree      = degree(g),
@@ -521,7 +524,7 @@ module_summary <- module_enrich_df %>%
   group_by(module) %>%
   summarise(
     n_sig_pathways = n(),
-    top_term       = Description[which.min(p.adjust)],
+    top_term       = ID[which.min(p.adjust)],
     top_q          = min(p.adjust),
     .groups = "drop"
   )
@@ -543,7 +546,6 @@ nodes_out <- nodes_out %>%
   left_join(module_summary %>% dplyr::select(module, module_label),
             by = "module")
 
-
 # 10) Prioritising biologically meaningful modules
 key_modules <- module_summary %>%
   filter(
@@ -556,6 +558,13 @@ key_modules <- module_summary %>%
   # The modules with significant pathways (biologically meaningful) ranked by top_q (strongest enrichment)
 key_modules %>% dplyr::select(module, module_size, n_sig_pathways, top_q)
 
+  # Adding a label for every gene :is it inside a key module?
+nodes_out <- nodes_out %>%
+  mutate(
+    in_key_module = module %in% key_modules$module
+  ) %>%
+  relocate(in_key_module, .after = module)  # relocating in specific position
+
   # Saving the key modules table in csv format
 readr::write_csv(
   key_modules,
@@ -566,44 +575,31 @@ readr::write_csv(
 ```{r}
 # 1) Extracting nodes of particular interest:
 
-# ---------- Top 20 Hubs (by strength) ----------
-top20_hubs <- nodes_out %>%
-  arrange(desc(strength)) %>%
-  slice_head(n = 20)
-
-# ---------- Top 10 upregulated genes ----------
-top10_up <- nodes_out %>%
+# Top 20 most upregulated DE genes (FDR < 0.05)
+top20_up <- nodes_out %>%
   filter(!is.na(logFC), logFC > 0,
          !is.na(adj.P.Val), adj.P.Val < 0.05) %>%
   arrange(desc(logFC)) %>%
-  slice_head(n = 10)
+  slice_head(n = 20) %>%
+  mutate(direction = "Upregulated")
 
-# ---------- Top 10 downregulated genes ----------
-top10_down <- nodes_out %>%
+# Top 20 most downregulated DE genes (FDR < 0.05)
+top20_down <- nodes_out %>%
   filter(!is.na(logFC), logFC < 0,
          !is.na(adj.P.Val), adj.P.Val < 0.05) %>%
-  arrange(logFC) %>%
-  slice_head(n = 10)
+  arrange(logFC) %>%                 # most negative first
+  slice_head(n = 20) %>%
+  mutate(direction = "Downregulated")
 
-# ---------- Final top 40 genes ----------
-combined_40 <- bind_rows(
-  top20_hubs %>% mutate(category = "Hub (Top 20)"),
-  top10_up   %>% mutate(category = "Upregulated (Top 10)"),
-  top10_down %>% mutate(category = "Downregulated (Top 10)")
-) %>% arrange(desc(strength), desc(logFC))
+# Final top 40 genes
+combined_40 <- bind_rows(top20_up, top20_down) %>%
+  arrange(desc(abs(logFC))) #ordered by strongest change first
 
-# 2) Checking for gene overlap between the hubs and regulated genes categories
-overlapping_genes <- combined_40 %>%
-  group_by(symbol) %>%
-  filter(n() > 1) %>%
-  ungroup()
+View(combined_40)
 
-cat("There are", n_distinct(overlapping_genes$symbol),
-    "genes that appear in more than one top-40 category (hub/up/down).\n")
-
-# 3) Saving ranked top 40 in csv format
+# 2) Saving ranked top 40 in csv format
 write_csv(
   combined_40,
-  file.path(output_dir, paste0(tag, "_top40_combined_ranked.csv"))
+  file.path(output_dir, paste0(tag, "_top40_DE.csv"))
 )
 ```
