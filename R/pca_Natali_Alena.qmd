@@ -1,0 +1,93 @@
+---
+title: "pca_Natali_Alena"
+format: html
+---
+
+# PCA Plot
+
+## Data Visualization
+
+### Load Libraries
+
+```{r}
+library(tidyverse)
+library(ggbiplot)
+library(devtools)
+```
+
+### Load Data
+
+```{r}
+expr_data <- read.csv("../data/GSE45827_expression.csv", row.names = 1)
+pheno_data <- read.csv("../data/GSE45827_Phenotype_metadata.csv", row.names = 1)
+```
+
+### Tidy Data
+
+```{r}
+transp_expr <- t(expr_data)
+```
+
+```{r}
+transp_expr <- data.frame(transp_expr)
+```
+
+```{r}
+transp_expr <- transp_expr |>
+  mutate(cancer = pheno_data$`diagnosis.ch1`)
+```
+
+```{r}
+transp_expr <- transp_expr |>
+  mutate(subtype = pheno_data$`tumor.subtype.ch1`)
+```
+
+```{r}
+transp_expr <- transp_expr |>
+  filter(!is.na(cancer))
+```
+
+```{r}
+transp_expr <- transp_expr |>
+  filter(!is.na(subtype))
+```
+
+```{r}
+transp_expr <- transp_expr|>
+  mutate(subtype = if_else(subtype == "N/A", "Normal", subtype))
+```
+
+### PCA Calculation And Plotting
+
+```{r}
+expr_only <- transp_expr |>  select(-subtype, -cancer)
+```
+
+```{r}
+pc <- prcomp(expr_only, center = TRUE, scale. = TRUE)
+```
+
+```{r}
+ggbiplot(pc, 
+         obs.scale = 1,
+         var.scale = 1,
+         groups = transp_expr$cancer,
+         var.axes = FALSE)
+```
+
+```{r}
+ggbiplot(pc, 
+         obs.scale = 1,
+         var.scale = 1,
+         groups = transp_expr$subtype,
+         var.axes = FALSE)
+  
+```
+
+## Data Analysis
+
+PCA Plots are a tool for visualizing high dimensional data onto an orthogonal basis so that the first principal component (PC, aka the "axis") is aligned with the largest source of variance, and then the second PC is aligned with the second largest source of variance etc. This is used to visualize and identify underlying patterns within the data.
+
+The second plot shows us which samples are similar in terms of their gene expression, and which ones are different, which reveals clusters of similarly behaving gene expression. As the coloring shows, the tumour subtypes are plotted in certain area of the graph. This means, there are patterns of gene expression within one subtype that differ generally from other subtypes. This proves clinic significance of the subtypes and enforces further analysis of the gene expression behavior.
+
+The first graph shows the more general plot and instead of plotting for all the different subtypes of tumor, we are looking at the genes that are highly expressed in all the breast cancers vs in normal cells, and colored based on these two variables.

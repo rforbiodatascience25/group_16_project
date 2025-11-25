@@ -6,6 +6,7 @@ Add yourself:
 *Name, Student Number, GitHub Username*
 
 Angela Garcinuno Feliciano, s254630, agarfel
+Alena Schwerin, s251740, Alena3210
 
 
 ## Download Data
