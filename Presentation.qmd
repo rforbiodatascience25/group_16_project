@@ -1,0 +1,39 @@
+---
+title: "Gene Expression Analysis Of Breast Cancer"
+subtitle: "Ángela Garcinuño Feliciano, Magdalena Paulina Flaszyńska, Natali Sakurako Baba Jensen, Marios Topalis, Alena Schwerin" 
+format: revealjs
+---
+
+# Description (Angela)
+- data preparation
+- cancer subtypes
+
+# PCA Plot
+
+- data preparation (adding columns)
+- describing plots
+
+# Magda
+
+- why this comparison (biggest changes)
+
+
+# Magda
+
+- pathways
+- yyy
+
+# Magda
+
+- genes
+- which genes are overlapping
+
+# Marios
+
+- first network graph (Louvaine+ora analysis)
+
+# Marios
+
+- second network graph + top 40 genes
+
+# Comparison / Conclusion
