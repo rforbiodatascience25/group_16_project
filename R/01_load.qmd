@@ -1,0 +1,62 @@
+---
+title: "Load Data"
+format: html
+---
+
+## Load Libraries
+
+```{r}
+#| message: false
+
+library(GEOquery)
+library(tidyverse)
+```
+
+## Load Raw Data
+
+```{r}
+#| message: false
+
+if (!dir.exists("../data/_raw")) {
+  dir.create("../data/_raw", recursive = TRUE)
+}
+
+raw_file <- "../data/_raw/GSE45827.RData"
+
+if (!file.exists(raw_file)) {
+  gse <- getGEO("GSE45827", GSEMatrix = TRUE)
+  save(gse, file = raw_file)
+} else {
+  load(raw_file)
+}
+```
+
+## Split Raw Data into 3 main Data Frames
+
+-   Gene expression Data
+
+-   Sample Metadata
+
+-   Gene Metadata
+
+```{r}
+#| message: false
+
+exprSet <- gse[[1]]
+
+expr_data <- exprs(exprSet)
+pheno_data <- pData(exprSet)
+feature_data <- fData(exprSet)
+```
+
+
+## Save Data Frames into csv files
+
+```{r}
+#| results: hide
+
+write.csv(expr_data, "../data/GSE45827_expression.csv")
+write.csv(pheno_data, "../data/GSE45827_Phenotype_metadata.csv")
+write.csv(feature_data, "../data/GSE45827_Feature_metadata.csv")
+
+```
