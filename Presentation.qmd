@@ -4,38 +4,47 @@ subtitle: "Ángela Garcinuño Feliciano, Magdalena Paulina Flaszyńska, Natali S
 format: revealjs
 ---
 
-# Description (Angela)
-- data preparation
+## Description (Angela)
+- data preparation (what, how cleaning, what doing with it)
 - cancer subtypes
 
-# PCA Plot
+## PCA Plot of Expression Data
 
-- data preparation (adding columns)
-- describing plots
+![](results/changed_expr.csv)
+```{r}
+library(tidyverse)
+changed_expr <- read_csv("results/changed_expr.csv")
 
-# Magda
+changed_expr
+
+```
+
+![](results/pca_cancer.png){width=70%} + ![](results/pca_subtypes.png){width=70%}
+
+
+## Magda
 
 - why this comparison (biggest changes)
 
 
-# Magda
+## Magda
 
 - pathways
 - yyy
 
-# Magda
+## Magda
 
 - genes
 - which genes are overlapping
 
-# Marios
+## Marios
 
 - first network graph (Louvaine+ora analysis)
 
-# Marios
+## Marios
 
 - second network graph + top 40 genes
 
-# Comparison / Conclusion
+## Comparison / Conclusion
 
 - 
