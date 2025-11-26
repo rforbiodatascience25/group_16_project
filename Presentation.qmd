@@ -11,16 +11,23 @@ format: revealjs
 ## PCA Plot of Expression Data
 
 ```{r}
-#| tbl-cap: "Gene Expression with Cancer Subtypes"
-library(tidyverse)
-changed_expr <- read_csv("results/changed_expr.csv")
-print(changed_expr)
+##| tbl-cap: "Gene Expression with Cancer Subtypes"
+#library(tidyverse)
+#changed_expr <- read_csv("results/changed_expr.csv")
+#print(changed_expr)
 ```
 
-::: {layout ="2x1"}
-![](results/pca_cancer.png){width=60%}
-![](results/pca_subtypes.png){width=60%}
-::: 
+:::: {.columns}
+
+::: {.column width="50%"}
+![](results/pca_cancer.png){width=200%}
+:::
+
+::: {.column width="50%"}
+![](results/pca_subtypes.png){width=100%}
+:::
+
+::::
 
 ## Magda
 
