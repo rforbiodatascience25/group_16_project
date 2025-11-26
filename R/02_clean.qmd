@@ -1,0 +1,78 @@
+---
+title: "Clean Data"
+format: html
+html:
+---
+
+## Load Libraries
+```{r}
+#| message: false
+library(tidyr)
+library(dplyr)
+```
+
+
+## Load Data
+
+```{r}
+expr_data <- read.csv("../data/GSE45827_expression.csv", row.names = 1)
+feature_data <- read.csv("../data/GSE45827_Feature_metadata.csv", row.names = 1)
+pheno_data <- read.csv("../data/GSE45827_Phenotype_metadata.csv", row.names = 1)
+```
+
+
+## Phenotype Data Cleaning
+
+```{r}
+cell_lines <- pheno_data |> filter(`source_name_ch1` == "Human CellLine")
+pheno_data <- pheno_data |> filter(`source_name_ch1` != "Human CellLine")
+```
+
+
+```{r}
+pheno_data <- pheno_data |> 
+          select("diagnosis.ch1", "tumor.subtype.ch1") |> 
+          mutate(`diagnosis.ch1` = if_else(`diagnosis.ch1` == "None (normal)", "Healthy", `diagnosis.ch1`)) |> 
+          mutate(`tumor.subtype.ch1` = if_else(`tumor.subtype.ch1` == "N/A", "Healthy",`tumor.subtype.ch1`)) |> 
+          rename("diagnosis" ="diagnosis.ch1",
+                  "subtype" = "tumor.subtype.ch1")
+
+head(pheno_data)
+```
+
+
+
+
+## Feature Data Cleaning
+```{r}
+missing_geneIDs <- (feature_data |> filter(`ENTREZ_GENE_ID` == ""))$ID
+```
+
+
+```{r}
+feature_data <- feature_data |>
+          select("Gene.Symbol", "Gene.Title", "ENTREZ_GENE_ID") |> 
+          filter(`ENTREZ_GENE_ID` != "")
+head(feature_data)
+```
+
+## Gene Expression Data Cleaning
+```{r}
+expr_data <- expr_data |> select(-cell_lines$geo_accession)
+expr_data <- expr_data[!(rownames(expr_data) %in% missing_geneIDs), ]
+```
+
+
+```{r}
+head(expr_data)
+```
+
+## Save Clean Data
+
+```{r}
+#| results: hide
+write.csv(expr_data, "../data/GSE45827_clean_expression.csv")
+write.csv(pheno_data, "../data/GSE45827_clean_Phenotype_metadata.csv")
+write.csv(feature_data, "../data/GSE45827_clean_Feature_metadata.csv")
+```
+
