@@ -5,8 +5,9 @@ format: revealjs
 ---
 
 ## Description (Angela)
-- data preparation (what, how cleaning, what doing with it)
-- cancer subtypes
+
+-   data preparation (what, how cleaning, what doing with it)
+-   cancer subtypes
 
 ## PCA Plot of Expression Data
 
@@ -17,41 +18,72 @@ format: revealjs
 #print(changed_expr)
 ```
 
-:::: {.columns}
-
+::::: columns
 ::: {.column width="50%"}
-![](results/pca_cancer.png){width=200%}
+![](results/pca_cancer.png){width="200%"}
 :::
 
 ::: {.column width="50%"}
-![](results/pca_subtypes.png){width=100%}
+![](results/pca_subtypes.png){width="100%"}
+:::
+:::::
+
+## Magda
+
+## Differential Expression Results
+
+| Comparison        | Down  | NotSig |  Up   |
+|:------------------|:-----:|:------:|:-----:|
+| **Basal vs Her2** | 4,214 | 17,359 | 4,895 |
+| **Basal vs LumA** | 7,551 | 10,767 | 8,150 |
+| **Her2 vs LumA**  | 5,390 | 15,936 | 5,142 |
+| **LumA vs LumB**  | 3,478 | 19,817 | 3,173 |
+
+::: footer
+Summary of significantly up- and down-regulated genes (adjusted p-value \< 0.05).
 :::
 
-::::
-
 ## Magda
 
-- why this comparison (biggest changes)
+```{r}
+#| echo: true
+#| output-location: column
+#| code-line-numbers: "6-10"
+
+# 1. Prepare Pathways (Hide this if it's too long)
+BP_df <- msigdbr(species = "human", category = "C5", subcategory = "BP")
+pathways <- split(BP_df$gene_symbol, f = BP_df$gs_name)
+
+# 2. Run GSEA
+fgseaRes <- fgseaMultilevel(
+  pathways = pathways,
+  stats    = stats,
+  minSize  = 15,
+  maxSize  = 500
+)
 
 
+```
+| Pathway                             | padj      |  NES  | leadingEdge|    
+|:------------------------------------|:---------:|:-----:|:----------:|
+| GOBP_CHROMOSOME_SEGREGATION         | 2.002e-36 | 3.218 | <chr[108]> |
+| GOBP_ORGANELLE_FISSION              | 1.392e-35 | 2.969 | <chr[127]> |
+| GOBP_NUCLEAR_CHROMOSOME_SEGREGATION | 5,312e-34 | 3.245 | <chr[91]>  |
+| GOBP_MITOTIC_NUCLEAR_DIVISION       | 2.115e-29 | 3.066 | <chr[93]>  |
+| GOBP_SISTER_CHROMATID_SEGREGATION   | 1.402e-28 | 3.242 | <chr[76]>  |
 ## Magda
 
-- pathways
-- yyy
-
-## Magda
-
-- genes
-- which genes are overlapping
+-   genes
+-   which genes are overlapping
 
 ## Marios
 
-- first network graph (Louvaine+ora analysis)
+-   first network graph (Louvaine+ora analysis)
 
 ## Marios
 
-- second network graph + top 40 genes
+-   second network graph + top 40 genes
 
 ## Comparison / Conclusion
 
-- 
+-   
