@@ -28,7 +28,6 @@ format: revealjs
 :::
 :::::
 
-## Magda
 
 ## Differential Expression Results
 
@@ -43,38 +42,41 @@ format: revealjs
 Summary of significantly up- and down-regulated genes (adjusted p-value \< 0.05).
 :::
 
-## Magda
+## Most Significant Pathways
 
-```{r}
-#| echo: true
-#| output-location: column
-#| code-line-numbers: "6-10"
+::: {style="font-size: 80%;"}
 
-# 1. Prepare Pathways (Hide this if it's too long)
-BP_df <- msigdbr(species = "human", category = "C5", subcategory = "BP")
-pathways <- split(BP_df$gene_symbol, f = BP_df$gs_name)
+<br>
+<br>
 
-# 2. Run GSEA
-fgseaRes <- fgseaMultilevel(
-  pathways = pathways,
-  stats    = stats,
-  minSize  = 15,
-  maxSize  = 500
-)
+| Pathway                        | padj      |  NES  | leadingEdge|    
+|:-------------------------------|:---------:|:-----:|:----------:|
+| CHROMOSOME_SEGREGATION         | 2.002e-36 | 3.218 | <chr[108]> |
+| ORGANELLE_FISSION              | 1.392e-35 | 2.969 | <chr[127]> |
+| NUCLEAR_CHROMOSOME SEGREGATION | 5,312e-34 | 3.245 | <chr[91]>  |
+| MITOTIC_NUCLEAR_DIVISION       | 2.115e-29 | 3.066 | <chr[93]>  |
+| SISTER_CHROMATID_SEGREGATION   | 1.402e-28 | 3.242 | <chr[76]>  |
 
+:::
 
-```
-| Pathway                             | padj      |  NES  | leadingEdge|    
-|:------------------------------------|:---------:|:-----:|:----------:|
-| GOBP_CHROMOSOME_SEGREGATION         | 2.002e-36 | 3.218 | <chr[108]> |
-| GOBP_ORGANELLE_FISSION              | 1.392e-35 | 2.969 | <chr[127]> |
-| GOBP_NUCLEAR_CHROMOSOME_SEGREGATION | 5,312e-34 | 3.245 | <chr[91]>  |
-| GOBP_MITOTIC_NUCLEAR_DIVISION       | 2.115e-29 | 3.066 | <chr[93]>  |
-| GOBP_SISTER_CHROMATID_SEGREGATION   | 1.402e-28 | 3.242 | <chr[76]>  |
-## Magda
+## Leading Edge Genes in Top 5 Pathways 
 
--   genes
--   which genes are overlapping
+| Path 1 | Path 2 | Path 3 | Path 4 | Path 5 |
+|:---|:---|:---|:---|:---|
+| *<span style="color: #e60000;">KIF2C</span>* | TPX2 | *<span style="color: #e60000;">KIF2C</span>* | TPX2 | *<span style="color: #e60000;">KIF2C</span>* |
+| *<span style="color: #e60000;">AURKB</span>* | *<span style="color: #e60000;">KIF2C</span>* | *<span style="color: #e60000;">AURKB</span>* | *<span style="color: #e60000;">KIF2C</span>* | *<span style="color: #e60000;">AURKB</span>* |
+| *<span style="color: #e60000;">KIF14</span>* | *<span style="color: #e60000;">AURKB</span>* | *<span style="color: #e60000;">KIF14</span>* | *<span style="color: #e60000;">AURKB</span>* | *<span style="color: #e60000;">KIF14</span>* |
+| *<span style="color: #e60000;">CEP55</span>* | *<span style="color: #e60000;">KIF14</span>* | *<span style="color: #e60000;">CEP55</span>* | *<span style="color: #e60000;">KIF14</span>* | *<span style="color: #e60000;">CEP55</span>* |
+| *<span style="color: #e60000;">BUB1</span>* | ASPM | *<span style="color: #e60000;">BUB1</span>* | *<span style="color: #e60000;">CEP55</span>* | *<span style="color: #e60000;">BUB1</span>* |
+| FAM83D | *<span style="color: #e60000;">CEP55</span>* | FAM83D | *<span style="color: #e60000;">BUB1</span>* | *<span style="color: #e60000;">CDC20</span>* |
+| *<span style="color: #e60000;">CDC20</span>* | *<span style="color: #e60000;">BUB1</span>* | *<span style="color: #e60000;">CDC20</span>* | *<span style="color: #e60000;">CDC20</span>* | *<span style="color: #e60000;">TTK</span>* |
+| *<span style="color: #e60000;">TTK</span>* | *<span style="color: #e60000;">CDC20</span>* | *<span style="color: #e60000;">TTK</span>* | *<span style="color: #e60000;">TTK</span>* | CENPF |
+| MKI67 | *<span style="color: #e60000;">TTK</span>* | CENPF | MKI67 | CDCA5 |
+| CENPF | MKI67 | CDCA5 | CENPF | NDC80 |
+
+::: footer
+*Red Genes* are shared across all 5 pathways (Core Drivers).
+:::
 
 ## Marios
 
