@@ -31,6 +31,11 @@ format: revealjs
 
 ## Differential Expression Results
 
+<br>
+
+::: {style="font-size: 115%;"}
+
+
 | Comparison        | Down  | NotSig |  Up   |
 |:------------------|:-----:|:------:|:-----:|
 | **Basal vs Her2** | 4,214 | 17,359 | 4,895 |
@@ -38,16 +43,34 @@ format: revealjs
 | **Her2 vs LumA**  | 5,390 | 15,936 | 5,142 |
 | **LumA vs LumB**  | 3,478 | 19,817 | 3,173 |
 
+:::
+
 ::: footer
 Summary of significantly up- and down-regulated genes (adjusted p-value \< 0.05).
+
 :::
 
 ## Most Significant Pathways
 
-::: {style="font-size: 80%;"}
+
+```{r}
+#| echo: true
+#| eval: false
+#| code-line-numbers: "4-7"
+
+BP_df <- msigdbr(species = "human", category = "C5", subcategory = "BP")
+pathways <- split(BP_df$gene_symbol, f = BP_df$gs_name)
+fgseaRes <- fgseaMultilevel(
+  pathways = pathways,
+  stats    = stats,
+  minSize  = 15,
+  maxSize  = 500)
+```
 
 <br>
-<br>
+
+::: {style="font-size: 80%;"}
+
 
 | Pathway                        | padj      |  NES  | leadingEdge|    
 |:-------------------------------|:---------:|:-----:|:----------:|
@@ -61,18 +84,22 @@ Summary of significantly up- and down-regulated genes (adjusted p-value \< 0.05)
 
 ## Leading Edge Genes in Top 5 Pathways 
 
+::: {style="font-size: 70%;"}
+
 | Path 1 | Path 2 | Path 3 | Path 4 | Path 5 |
 |:---|:---|:---|:---|:---|
-| *<span style="color: #e60000;">KIF2C</span>* | TPX2 | *<span style="color: #e60000;">KIF2C</span>* | TPX2 | *<span style="color: #e60000;">KIF2C</span>* |
-| *<span style="color: #e60000;">AURKB</span>* | *<span style="color: #e60000;">KIF2C</span>* | *<span style="color: #e60000;">AURKB</span>* | *<span style="color: #e60000;">KIF2C</span>* | *<span style="color: #e60000;">AURKB</span>* |
-| *<span style="color: #e60000;">KIF14</span>* | *<span style="color: #e60000;">AURKB</span>* | *<span style="color: #e60000;">KIF14</span>* | *<span style="color: #e60000;">AURKB</span>* | *<span style="color: #e60000;">KIF14</span>* |
-| *<span style="color: #e60000;">CEP55</span>* | *<span style="color: #e60000;">KIF14</span>* | *<span style="color: #e60000;">CEP55</span>* | *<span style="color: #e60000;">KIF14</span>* | *<span style="color: #e60000;">CEP55</span>* |
-| *<span style="color: #e60000;">BUB1</span>* | ASPM | *<span style="color: #e60000;">BUB1</span>* | *<span style="color: #e60000;">CEP55</span>* | *<span style="color: #e60000;">BUB1</span>* |
-| FAM83D | *<span style="color: #e60000;">CEP55</span>* | FAM83D | *<span style="color: #e60000;">BUB1</span>* | *<span style="color: #e60000;">CDC20</span>* |
-| *<span style="color: #e60000;">CDC20</span>* | *<span style="color: #e60000;">BUB1</span>* | *<span style="color: #e60000;">CDC20</span>* | *<span style="color: #e60000;">CDC20</span>* | *<span style="color: #e60000;">TTK</span>* |
-| *<span style="color: #e60000;">TTK</span>* | *<span style="color: #e60000;">CDC20</span>* | *<span style="color: #e60000;">TTK</span>* | *<span style="color: #e60000;">TTK</span>* | CENPF |
-| MKI67 | *<span style="color: #e60000;">TTK</span>* | CENPF | MKI67 | CDCA5 |
+| <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> |
+| <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> |
+| <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> |
+| <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> |
+| <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> |
+| <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> |
+| <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> |
+| FAM83D | TPX2 | FAM83D | TPX2 | CENPF |
+| MKI67 | ASPM | CENPF | MKI67 | CDCA5 |
 | CENPF | MKI67 | CDCA5 | CENPF | NDC80 |
+
+:::
 
 ::: footer
 *Red Genes* are shared across all 5 pathways (Core Drivers).
