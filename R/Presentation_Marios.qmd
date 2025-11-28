@@ -1,0 +1,29 @@
+---
+title: "Network & ORA Analysis"
+format:
+  revealjs:
+    incremental: false
+editor: 
+  markdown: 
+    wrap: 80
+---
+
+```{r setup, include=FALSE}
+library("dplyr")
+library("knitr")
+combined_40 <- read.csv("../results/Tumor_vs_Normal_top40_DE.csv")
+```
+
+## Network modules (Louvain clustering)
+
+<div style="text-align: center; margin-top: 20px;">
+![](../results/Tumor_vs_Normal_network_modules.png){width="100%" height="680px"}
+</div>
+
+## Top 40 differentially expressed genes {.smaller .scrollable}
+
+```{r}
+combined_40 |> 
+  dplyr::select(symbol, direction, hub, seed, module, module_label) |> 
+  knitr::kable()
+```

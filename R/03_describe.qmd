@@ -1,0 +1,103 @@
+---
+title: "Describe Data"
+format: html
+---
+
+## Load Libraries
+```{r}
+#| message: false
+library(dplyr)
+```
+
+
+## Load Data
+
+```{r}
+expr_data <- read.csv("../data/GSE45827_clean_expression.csv", row.names = 1)
+feature_data <- read.csv("../data/GSE45827_clean_Feature_metadata.csv", row.names = 1)
+pheno_data <- read.csv("../data/GSE45827_clean_Phenotype_metadata.csv", row.names = 1)
+```
+
+## Gene Expression Data
+
+Columns: Samples
+
+Rows: Genes
+
+```{r}
+expr_data[1:10,1:10]
+```
+
+**Number of Genes**
+
+```{r}
+nrow(expr_data)
+```
+
+**Number of Samples**
+
+```{r}
+ncol(expr_data)
+```
+
+## Feature Data Description
+
+```{r}
+head(feature_data)
+```
+
+**5 Columns:**
+
+```{r}
+colnames(feature_data)
+```
+
+-   **Representative.Public.ID**: Probe ID from the microarray platform
+
+-   **Gene.Symbol**: The official gene symbol, following HUGO Gene Nomenclature Committee (HGNC) naming
+
+-   **Gene.Title**: A longer, human-readable description of the gene.
+
+-   **ENTREZ_GENE_ID**: The NCBI Entrez Gene identifier (A unique numeric ID for each gene)
+
+-   **RefSeq.Transcript.ID**: One or more RefSeq transcript accession numbers that correspond to the gene or probe.
+
+**Number of Genes**
+
+```{r}
+nrow(feature_data)
+```
+
+## Phenotype Data Description
+
+```{r}
+head(pheno_data)
+```
+
+**2 Columns:**
+
+```{r}
+colnames(pheno_data)
+```
+
+-   **Diagnosis**: Breast cancer or healthy sample
+
+-   **Subtype**: Breast cancer subtype
+
+**Number of Samples**
+
+```{r}
+nrow(pheno_data)
+```
+
+**Distribution of Diagnosis Values**
+
+```{r}
+pheno_data |> count(diagnosis)
+```
+
+**Distribution of Cancer Subtype Values**
+
+```{r}
+pheno_data |> count(subtype)
+```
