@@ -93,11 +93,11 @@ nrow(pheno_data)
 **Distribution of Diagnosis Values**
 
 ```{r}
-pheno_data |> group_by(diagnosis) |> count()
+pheno_data |> count(diagnosis)
 ```
 
 **Distribution of Cancer Subtype Values**
 
 ```{r}
-pheno_data |> group_by(subtype) |> count()
+pheno_data |> count(subtype)
 ```
