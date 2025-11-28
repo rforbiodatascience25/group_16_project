@@ -30,7 +30,7 @@ samples_to_keep <- which(
 pheno_data_filtered <- pheno_data[samples_to_keep, ]
 expr_data_filtered <- expr_data[, samples_to_keep]
 
-groups <- as.factor(pheno_data_filtered$`tumor subtype:ch1`)
+groups <- as.factor(pheno_data$'subtype')
 
 print(length(samples_to_keep))
 print(levels(groups))
@@ -44,7 +44,7 @@ design <- model.matrix(~ 0 + groups)
 clean_levels <- make.names(levels(groups))
 colnames(design) <- clean_levels
 
-fit <- lmFit(expr_data_filtered, design)
+fit <- lmFit(expr_data, design)
 
 contrast_matrix <- makeContrasts(
   Basal_vs_Her2 = Basal - Her2,
@@ -71,7 +71,7 @@ top_table$probe_id <- rownames(top_table)
 
 probe_to_gene_map <- data.frame(
   probe_id = rownames(feature_data),
-  gene_symbol = feature_data$"Gene Symbol" )
+  gene_symbol = feature_data$"Gene.Symbol" )
 
 res_with_symbols <- merge(top_table, probe_to_gene_map, by="probe_id")
 
@@ -146,6 +146,7 @@ gene_counts <- table(all_genes_flat)
 gene_counts_sorted <- sort(gene_counts, decreasing = TRUE) 
 
 res <- gene_counts_sorted[gene_counts_sorted >= 3]
+res
 ```
 
 # Saving Results
