@@ -35,7 +35,9 @@ pheno_data <- pheno_data |>
           mutate(`diagnosis.ch1` = if_else(`diagnosis.ch1` == "None (normal)", "Healthy", `diagnosis.ch1`)) |> 
           mutate(`tumor.subtype.ch1` = if_else(`tumor.subtype.ch1` == "N/A", "Healthy",`tumor.subtype.ch1`)) |> 
           rename("diagnosis" ="diagnosis.ch1",
-                  "subtype" = "tumor.subtype.ch1")
+                  "subtype" = "tumor.subtype.ch1") |> 
+          mutate(diagnosis = factor(diagnosis),
+                 subtype = factor(subtype))
 
 head(pheno_data)
 ```
