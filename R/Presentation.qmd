@@ -1,0 +1,135 @@
+---
+title: "Gene Expression Analysis Of Breast Cancer"
+subtitle: "Ángela Garcinuño Feliciano, Magdalena Paulina Flaszyńska, Natali Sakurako Baba Jensen, Marios Topalis, Alena Schwerin" 
+format: revealjs
+---
+
+```{r setup, include=FALSE}
+library("dplyr")
+library("knitr")
+combined_40 <- read.csv("../results/Tumor_vs_Normal_top40_DE.csv")
+```
+
+## Description (Angela)
+
+-   data preparation (what, how cleaning, what doing with it)
+-   cancer subtypes
+
+## PCA Plot of Expression Data
+
+```{r}
+##| tbl-cap: "Gene Expression with Cancer Subtypes"
+#library(tidyverse)
+#changed_expr <- read_csv("results/changed_expr.csv")
+#print(changed_expr)
+```
+
+::::: columns
+::: {.column width="50%"}
+![](results/pca_cancer.png){width="200%"}
+:::
+
+::: {.column width="50%"}
+![](results/pca_subtypes.png){width="100%"}
+:::
+:::::
+
+
+## Differential Expression Results
+
+<br>
+
+::: {style="font-size: 115%;"}
+
+
+| Comparison        | Down  | NotSig |  Up   |
+|:------------------|:-----:|:------:|:-----:|
+| **Basal vs Her2** | 4,214 | 17,359 | 4,895 |
+| **Basal vs LumA** | 7,551 | 10,767 | 8,150 |
+| **Her2 vs LumA**  | 5,390 | 15,936 | 5,142 |
+| **LumA vs LumB**  | 3,478 | 19,817 | 3,173 |
+
+:::
+
+::: footer
+Summary of significantly up- and down-regulated genes (adjusted p-value \< 0.05).
+
+:::
+
+## Most Significant Pathways
+
+
+```{r}
+#| echo: true
+#| eval: false
+#| code-line-numbers: "4-7"
+
+BP_df <- msigdbr(species = "human", category = "C5", subcategory = "BP")
+pathways <- split(BP_df$gene_symbol, f = BP_df$gs_name)
+fgseaRes <- fgseaMultilevel(
+  pathways = pathways,
+  stats    = stats,
+  minSize  = 15,
+  maxSize  = 500)
+```
+
+<br>
+
+::: {style="font-size: 80%;"}
+
+
+| Pathway                        | padj      |  NES  | leadingEdge|    
+|:-------------------------------|:---------:|:-----:|:----------:|
+| CHROMOSOME_SEGREGATION         | 2.002e-36 | 3.218 | <chr[108]> |
+| ORGANELLE_FISSION              | 1.392e-35 | 2.969 | <chr[127]> |
+| NUCLEAR_CHROMOSOME SEGREGATION | 5,312e-34 | 3.245 | <chr[91]>  |
+| MITOTIC_NUCLEAR_DIVISION       | 2.115e-29 | 3.066 | <chr[93]>  |
+| SISTER_CHROMATID_SEGREGATION   | 1.402e-28 | 3.242 | <chr[76]>  |
+
+:::
+
+## Leading Edge Genes in Top 5 Pathways 
+
+::: {style="font-size: 70%;"}
+
+| Path 1 | Path 2 | Path 3 | Path 4 | Path 5 |
+|:---|:---|:---|:---|:---|
+| <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> |
+| <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> |
+| <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> |
+| <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> |
+| <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> |
+| <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> |
+| <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> |
+| FAM83D | TPX2 | FAM83D | TPX2 | CENPF |
+| MKI67 | ASPM | CENPF | MKI67 | CDCA5 |
+| CENPF | MKI67 | CDCA5 | CENPF | NDC80 |
+
+:::
+
+::: footer
+*Red Genes* are shared across all 5 pathways (Core Drivers).
+:::
+
+## Network modules (Louvain detection)
+
+<div style="text-align: center; margin-top: 20px;">
+![](../results/Tumor_vs_Normal_network_modules.png){width="100%" height="680px"}
+</div>
+
+::: footer
+Non-key modules have been removed.
+:::
+
+## Top 40 differentially expressed genes {.smaller .scrollable}
+### ORA analysis for biological interpretation
+
+```{r}
+combined_40 |> 
+  dplyr::select(symbol, direction, hub, seed, module, module_label) |> 
+  knitr::kable()
+```
+
+## Comparison / Conclusion
+
+-   
