@@ -1,7 +1,21 @@
 ---
 title: "Differential Gene Expression Analysis of Breast Cancer"
-format: html
+format: 
+  html:
+    self-contained: true
+execute:
+  engine: knitr
 ---
+```{bash}
+#| include: false
+quarto render 01_load.qmd --output-dir ../results/
+quarto render 02_clean.qmd --output-dir ../results/
+quarto render 03_describe.qmd --output-dir ../results/
+quarto render 04_analysis_1.qmd --output-dir ../results/
+quarto render 05_analysis_2.qmd --output-dir ../results/
+quarto render 06_analysis_3.qmd --output-dir ../results/
+
+```
 
 {{< include 01_load.qmd >}}
 

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Describe Data</title>
+<title>Network Analysis</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -3084,7 +3084,7 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Describe Data</h1>
+<h1 class="title">Network Analysis</h1>
 </div>
 
 
@@ -3101,170 +3101,1186 @@ vertical-align: -.125em;
 </header>
 
 
-<section id="describe-data" class="level1">
-<h1>Describe Data</h1>
+<section id="network-analysis" class="level1">
+<h1>Network Analysis</h1>
 <section id="load-libraries" class="level2">
 <h2 class="anchored" data-anchor-id="load-libraries">Load Libraries</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;GEOquery&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;Biobase&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;limma&quot;</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;dplyr&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;tibble&quot;</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;stringr&quot;</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;readr&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;igraph&quot;</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;msigdbr&quot;</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;clusterProfiler&quot;</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;Matrix&quot;</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;quarto&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="load-data" class="level2">
 <h2 class="anchored" data-anchor-id="load-data">Load Data</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>expr_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../data/GSE45827_clean_expression.csv&quot;</span>, <span class="at">row.names =</span> <span class="dv">1</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>feature_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../data/GSE45827_clean_Feature_metadata.csv&quot;</span>, <span class="at">row.names =</span> <span class="dv">1</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>pheno_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../data/GSE45827_clean_Phenotype_metadata.csv&quot;</span>, <span class="at">row.names =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>expr_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;../data/GSE45827_clean_expression.csv&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="dv">1</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>feature_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;../data/GSE45827_clean_Feature_metadata.csv&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(feature_data)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;ProbeID&quot;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>pheno_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;../data/GSE45827_clean_Phenotype_metadata.csv&quot;</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(pheno_data)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;SampleID&quot;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Set output directory</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span> <span class="st">&quot;../results&quot;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="gene-expression-data" class="level2">
-<h2 class="anchored" data-anchor-id="gene-expression-data">Gene Expression Data</h2>
-<p>Columns: Samples</p>
-<p>Rows: Genes</p>
+<section id="differential-expression-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="differential-expression-analysis">Differential Expression Analysis</h2>
+<p>Analysis is performed using limma. It involves a linear model that is fitted for the Tumor vs Healthy contrast and empirical Bayes shrinkage which is applied to stabilize variance estimates. All tested genes are carried forward to the network analysis, while significantly differentiated ones (e.g. FDR &lt; 0.05 and |logFC| &gt; 1) are later used as seed genes to anchor subnetworks.</p>
+<p><strong>Set up Model</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>expr_data[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>             GSM1116084 GSM1116085 GSM1116086 GSM1116087 GSM1116088 GSM1116089
-1007_s_at       9.47065    9.67440   10.20800   10.11420   11.16360   10.00690
-1053_at         8.36311    8.72194    7.78601    9.44537    7.71242    7.84274
-117_at          5.95426    7.02523    6.39671    4.56023    5.29008    6.21590
-1294_at         6.02119    7.24581    6.85310    5.42786    7.51120    5.79719
-1316_at         3.22997    3.29352    3.26204    3.34766    3.59086    3.40108
-1405_i_at      10.82220    9.29455    9.45727   11.51270    8.83075    9.07636
-1438_at         4.39698    6.68936    5.46440    5.29748    6.81821    5.10469
-1487_at         6.65320    7.20820    6.68974    6.87276    6.45744    6.87822
-1552256_a_at   10.91320    9.32204    7.73131   10.39210    7.05836    7.89627
-1552257_a_at   10.07510    9.34476    8.43573    9.63893    9.37463    8.27604
-             GSM1116090 GSM1116091 GSM1116092 GSM1116093
-1007_s_at       9.53932    9.00187    6.54074   10.35510
-1053_at         7.56238    8.01540    9.37874    9.45426
-117_at          6.42180    6.23554    5.43541    3.85652
-1294_at         7.36700    7.17268    7.72472    4.79560
-1316_at         3.27663    3.14212    3.28420    3.27900
-1405_i_at      10.99010   11.15940    9.05848    3.90108
-1438_at         5.05443    6.87350    5.20408    8.83710
-1487_at         6.67559    6.31095    6.88597    6.93847
-1552256_a_at    8.51650    9.34351    8.62752   10.22550
-1552257_a_at    7.45211    9.68665    8.50533    9.30071</code></pre>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>design_all <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span> diagnosis,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> pheno_data</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<p><strong>Number of Genes</strong></p>
+<p><strong>Fit model</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(expr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 26468</code></pre>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fit_all <span class="ot">&lt;-</span> expr_data <span class="sc">|&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lmFit</span>(design_all) <span class="sc">|&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">eBayes</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<p><strong>Number of Samples</strong></p>
+<p><strong>Get Results</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ncol</span>(expr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>tt_tumor_vs_Healthy <span class="ot">&lt;-</span> <span class="fu">topTable</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  fit_all,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">coef   =</span> <span class="st">&quot;diagnosisHealthy&quot;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">number =</span> <span class="cn">Inf</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">sort.by =</span> <span class="st">&quot;P&quot;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tt_tumor_vs_Healthy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 141</code></pre>
+<pre><code>               logFC  AveExpr        t      P.Value    adj.P.Val        B
+211565_at   6.357343 2.569430 52.42703 9.801966e-95 2.594384e-90 202.6620
+243689_s_at 6.101876 3.115981 37.98376 3.261078e-76 4.315711e-72 162.1877
+224012_at   4.961053 3.268422 31.44882 8.169992e-66 7.208112e-62 138.9671
+238062_at   4.518850 2.634483 27.33766 2.118232e-58 1.401634e-54 122.2649
+213715_s_at 2.845828 5.467643 27.16630 4.483468e-58 2.373368e-54 121.5290
+1562527_at  5.331220 2.888688 26.74320 2.895354e-57 1.277237e-53 119.6975</code></pre>
+</div>
+</div>
+<p><strong>View Differential Expression Results</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>tt_tumor_vs_Healthy <span class="ot">&lt;-</span> tt_tumor_vs_Healthy <span class="sc">|&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">&quot;ProbeID&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    feature_data <span class="sc">|&gt;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        ProbeID,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">Gene.Symbol =</span> <span class="st">`</span><span class="at">Gene.Symbol</span><span class="st">`</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">&quot;ProbeID&quot;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(Gene.Symbol, <span class="at">.after =</span> ProbeID)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tt_tumor_vs_Healthy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      ProbeID                                         Gene.Symbol    logFC
+1   211565_at                                              SH3GL3 6.357343
+2 243689_s_at                                               FRG1B 6.101876
+3   224012_at ANKRD20A1 /// ANKRD20A2 /// ANKRD20A3 /// ANKRD20A4 4.961053
+4   238062_at                                             GPIHBP1 4.518850
+5 213715_s_at                                               KANK3 2.845828
+6  1562527_at                                           LOC441666 5.331220
+   AveExpr        t      P.Value    adj.P.Val        B
+1 2.569430 52.42703 9.801966e-95 2.594384e-90 202.6620
+2 3.115981 37.98376 3.261078e-76 4.315711e-72 162.1877
+3 3.268422 31.44882 8.169992e-66 7.208112e-62 138.9671
+4 2.634483 27.33766 2.118232e-58 1.401634e-54 122.2649
+5 5.467643 27.16630 4.483468e-58 2.373368e-54 121.5290
+6 2.888688 26.74320 2.895354e-57 1.277237e-53 119.6975</code></pre>
+</div>
+</div>
+<p><strong>Number of significant genes (FDR&lt;0.05, |logFC|&gt;1):</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    tt_tumor_vs_Healthy<span class="sc">$</span>adj.P.Val <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">&amp;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">abs</span>(tt_tumor_vs_Healthy<span class="sc">$</span>logFC) <span class="sc">&gt;</span> <span class="dv">1</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 8134</code></pre>
+</div>
+</div>
+<p><strong>Save Results</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>DE_results <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Tumor_vs_Healthy =</span> tt_tumor_vs_Healthy</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="network-analysis-1" class="level2">
+<h2 class="anchored" data-anchor-id="network-analysis-1">Network Analysis</h2>
+<p><strong>Load Helper Functions</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;99_proj_func.R&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="network-construction-and-summary" class="level2">
+<h2 class="anchored" data-anchor-id="network-construction-and-summary">Network Construction and Summary</h2>
+<p>We construct a Reactome co-membership network using gene–pathway incidence data. The edges reflect shared pathway membership and seed genes serve as anchors for selecting relevant subnetworks. After Louvain community detection, we extract the largest connected clusters and compute core network statistics including modules, hubs, and connectivity.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>tag <span class="ot">&lt;-</span> <span class="st">&quot;Tumor_vs_Healthy&quot;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>tt_gene <span class="ot">&lt;-</span> <span class="fu">collapse_to_genes</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  DE_results[[tag]],</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  feature_data</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>universe_symbols <span class="ot">&lt;-</span> tt_gene<span class="sc">$</span>symbol</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(universe_symbols)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] &quot;A1BG&quot;     &quot;A1BG-AS1&quot; &quot;A2M&quot;      &quot;A2M-AS1&quot;  &quot;A2ML1&quot;    &quot;A4GALT&quot;  </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sym2 <span class="ot">&lt;-</span> tt_gene <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    symbol,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    logFC,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    adj.P.Val</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(sym2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 3
+  symbol     logFC adj.P.Val
+  &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;
+1 A1BG      0.103  0.492    
+2 A1BG-AS1  0.174  0.160    
+3 A2M       1.41   0.0000117
+4 A2M-AS1   0.134  0.557    
+5 A2ML1    -0.762  0.222    
+6 A4GALT    0.0642 0.377    </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>seeds <span class="ot">&lt;-</span> <span class="fu">pick_seeds</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  tt_gene,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">fdr =</span> <span class="fl">0.01</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">lfc =</span> <span class="fl">1.5</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(seeds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] &quot;SH3GL3&quot;                                             
+[2] &quot;FRG1B&quot;                                              
+[3] &quot;ANKRD20A1 /// ANKRD20A2 /// ANKRD20A3 /// ANKRD20A4&quot;
+[4] &quot;GPIHBP1&quot;                                            
+[5] &quot;KANK3&quot;                                              
+[6] &quot;LOC441666&quot;                                          </code></pre>
+</div>
+</div>
+<p><strong>Universe genes:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(universe_symbols)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 14712</code></pre>
+</div>
+</div>
+<p><strong>Seed genes:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(seeds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3626</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>reactome_df <span class="ot">&lt;-</span> <span class="fu">msigdbr</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">species =</span> <span class="st">&quot;Homo sapiens&quot;</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">category =</span> <span class="st">&quot;C2&quot;</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">subcategory =</span> <span class="st">&quot;REACTOME&quot;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    gs_name,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    gene_symbol</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    gene_symbol <span class="sc">%in%</span> universe_symbols</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(reactome_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 2
+  gs_name                         gene_symbol
+  &lt;chr&gt;                           &lt;chr&gt;      
+1 REACTOME_2_LTR_CIRCLE_FORMATION BANF1      
+2 REACTOME_2_LTR_CIRCLE_FORMATION HMGA1      
+3 REACTOME_2_LTR_CIRCLE_FORMATION LIG4       
+4 REACTOME_2_LTR_CIRCLE_FORMATION PSIP1      
+5 REACTOME_2_LTR_CIRCLE_FORMATION XRCC4      
+6 REACTOME_2_LTR_CIRCLE_FORMATION XRCC5      </code></pre>
+</div>
+</div>
+<p><strong>Reactome pathways covering universe:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(reactome_df<span class="sc">$</span>gs_name))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1608</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>genes <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(reactome_df<span class="sc">$</span>gene_symbol))</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>paths <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(reactome_df<span class="sc">$</span>gs_name))</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>gi <span class="ot">&lt;-</span> <span class="fu">match</span>(reactome_df<span class="sc">$</span>gene_symbol, genes)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>pi <span class="ot">&lt;-</span> <span class="fu">match</span>(reactome_df<span class="sc">$</span>gs_name, paths)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Make Adjacency Matrix</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>Inc <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">i =</span> gi,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">j =</span> pi,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="dv">1</span>,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">dims =</span> <span class="fu">c</span>(<span class="fu">length</span>(genes), <span class="fu">length</span>(paths)),</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">dimnames =</span> <span class="fu">list</span>(genes, paths)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>Adj <span class="ot">&lt;-</span> Inc <span class="sc">%*%</span> <span class="fu">t</span>(Inc)</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="fu">diag</span>(Adj) <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>min_shared <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>seed_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">rownames</span>(Adj) <span class="sc">%in%</span> seeds)</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>nbr_raw <span class="ot">&lt;-</span> Adj[seed_idx, , drop <span class="ot">=</span> <span class="cn">FALSE</span>] <span class="sc">&gt;</span> <span class="dv">0</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(seed_idx) <span class="sc">==</span> <span class="dv">1</span>) {</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>  nbr_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">as.vector</span>(nbr_raw))</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>  nbr_idx <span class="ot">&lt;-</span> <span class="fu">unique</span>(</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unlist</span>(</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">apply</span>(</span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>        nbr_raw,</span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span>,</span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>        which</span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a>nbr_idx <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">c</span>(seed_idx, nbr_idx))</span>
+<span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-33"><a href="#cb29-33" aria-hidden="true" tabindex="-1"></a>Adj_sub <span class="ot">&lt;-</span> Adj[nbr_idx, nbr_idx, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb29-34"><a href="#cb29-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-35"><a href="#cb29-35" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">summary</span>(Adj_sub)</span>
+<span id="cb29-36"><a href="#cb29-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-37"><a href="#cb29-37" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> A[</span>
+<span id="cb29-38"><a href="#cb29-38" aria-hidden="true" tabindex="-1"></a>  A<span class="sc">$</span>i <span class="sc">&lt;</span> A<span class="sc">$</span>j <span class="sc">&amp;</span> A<span class="sc">$</span>x <span class="sc">&gt;=</span> min_shared,</span>
+<span id="cb29-39"><a href="#cb29-39" aria-hidden="true" tabindex="-1"></a>  ,</span>
+<span id="cb29-40"><a href="#cb29-40" aria-hidden="true" tabindex="-1"></a>  drop <span class="ot">=</span> <span class="cn">FALSE</span></span>
+<span id="cb29-41"><a href="#cb29-41" aria-hidden="true" tabindex="-1"></a>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Define Edges</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>edges <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">from =</span> <span class="fu">rownames</span>(Adj_sub)[A<span class="sc">$</span>i],</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">to =</span> <span class="fu">rownames</span>(Adj_sub)[A<span class="sc">$</span>j],</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> <span class="fu">as.numeric</span>(A<span class="sc">$</span>x)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Define Vertices</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>node_syms <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(<span class="fu">c</span>(edges<span class="sc">$</span>from, edges<span class="sc">$</span>to)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Define Graph</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>g <span class="ot">&lt;-</span> <span class="fu">graph_from_data_frame</span>(</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">d =</span> edges,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">vertices =</span> <span class="fu">tibble</span>(<span class="at">symbol =</span> node_syms),</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">directed =</span> <span class="cn">FALSE</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="fu">V</span>(g)<span class="sc">$</span>symbol <span class="ot">&lt;-</span> <span class="fu">V</span>(g)<span class="sc">$</span>name</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="fu">V</span>(g)<span class="sc">$</span>seed <span class="ot">&lt;-</span> <span class="fu">V</span>(g)<span class="sc">$</span>symbol <span class="sc">%in%</span> seeds</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="fu">V</span>(g)<span class="sc">$</span>logFC <span class="ot">&lt;-</span> sym2<span class="sc">$</span>logFC[</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">match</span>(<span class="fu">V</span>(g)<span class="sc">$</span>symbol, sym2<span class="sc">$</span>symbol)</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="fu">V</span>(g)<span class="sc">$</span>adj.P.Val <span class="ot">&lt;-</span> sym2<span class="sc">$</span>adj.P.Val[</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">match</span>(<span class="fu">V</span>(g)<span class="sc">$</span>symbol, sym2<span class="sc">$</span>symbol)</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>g <span class="ot">&lt;-</span> igraph<span class="sc">::</span><span class="fu">simplify</span>(</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>  g,</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">remove.multiple =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">remove.loops =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">edge.attr.comb =</span> <span class="fu">list</span>(<span class="at">weight =</span> <span class="st">&quot;sum&quot;</span>)</span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Get Clusters</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>com <span class="ot">&lt;-</span> <span class="fu">cluster_louvain</span>(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  g,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> <span class="fu">E</span>(g)<span class="sc">$</span>weight</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="fu">V</span>(g)<span class="sc">$</span>module <span class="ot">&lt;-</span> <span class="fu">membership</span>(com)</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>comp <span class="ot">&lt;-</span> <span class="fu">components</span>(g)</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>gc_id <span class="ot">&lt;-</span> <span class="fu">which.max</span>(comp<span class="sc">$</span>csize)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>g <span class="ot">&lt;-</span> <span class="fu">induced_subgraph</span>(</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>  g,</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">vids =</span> <span class="fu">which</span>(comp<span class="sc">$</span>membership <span class="sc">==</span> gc_id)</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Final network - Nodes:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gorder</span>(g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7231</code></pre>
+</div>
+</div>
+<p><strong>Edges:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gsize</span>(g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1379925</code></pre>
+</div>
+</div>
+<p><strong>Modules detected:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(<span class="fu">V</span>(g)<span class="sc">$</span>module))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 12</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_net_modules_hubs</span>(</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  g,</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  tag,</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  output_dir</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>svg 
+  2 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>hub_logical <span class="ot">&lt;-</span> <span class="fu">get_hub_logical</span>(g, <span class="at">q =</span> <span class="fl">0.90</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(hub_logical)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> A1BG   A2M  AAAS  AACS AADAT  AAK1 
+FALSE FALSE  TRUE FALSE FALSE FALSE </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>nodes_out <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">symbol =</span> <span class="fu">V</span>(g)<span class="sc">$</span>symbol,</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">hub =</span> hub_logical,</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> <span class="fu">V</span>(g)<span class="sc">$</span>seed,</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">module =</span> <span class="fu">V</span>(g)<span class="sc">$</span>module,</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">degree =</span> <span class="fu">degree</span>(g),</span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">strength =</span> <span class="fu">strength</span>(</span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>    g,</span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">vids =</span> <span class="fu">V</span>(g),</span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">weights =</span> <span class="fu">E</span>(g)<span class="sc">$</span>weight</span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">betweenness =</span> <span class="fu">betweenness</span>(</span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>    g,</span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">directed =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">normalized =</span> <span class="cn">TRUE</span></span>
+<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">logFC =</span> <span class="fu">V</span>(g)<span class="sc">$</span>logFC,</span>
+<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">adj.P.Val =</span> <span class="fu">V</span>(g)<span class="sc">$</span>adj.P.Val</span>
+<span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(nodes_out)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 9
+  symbol hub   seed  module degree strength betweenness  logFC adj.P.Val
+  &lt;chr&gt;  &lt;lgl&gt; &lt;lgl&gt;  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;
+1 A1BG   FALSE FALSE      1    588     1392  0.0000380   0.103 0.492    
+2 A2M    FALSE FALSE      2    409     1006  0.000360    1.41  0.0000117
+3 AAAS   TRUE  FALSE      3   1902     7631  0.00561    -0.177 0.332    
+4 AACS   FALSE FALSE      4      7       20  0           0.496 0.0719   
+5 AADAT  FALSE FALSE      4     16       32  0.0000330  -0.366 0.245    
+6 AAK1   FALSE FALSE      5    553     1324  0.00000646  0.560 0.000544 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>mod_DE_info <span class="ot">&lt;-</span> nodes_out <span class="sc">|&gt;</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(module) <span class="sc">|&gt;</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">module_size =</span> <span class="fu">n</span>(),</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_DE =</span> <span class="fu">sum</span>(</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>      adj.P.Val <span class="sc">&lt;</span> <span class="fl">0.05</span>,</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">na.rm =</span> <span class="cn">TRUE</span></span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(mod_DE_info)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 3
+  module module_size  n_DE
+   &lt;dbl&gt;       &lt;int&gt; &lt;int&gt;
+1      1         588   367
+2      2        1021   653
+3      3         570   443
+4      4         723   462
+5      5         685   519
+6      6         974   639</code></pre>
+</div>
+</div>
+<p><strong>Network Statistics:</strong></p>
+<p><strong>Total nodes:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gorder</span>(g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7231</code></pre>
+</div>
+</div>
+<p><strong>Total edges:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gsize</span>(g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1379925</code></pre>
+</div>
+</div>
+<p><strong>Seed nodes:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">V</span>(g)<span class="sc">$</span>seed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2073</code></pre>
+</div>
+</div>
+<p><strong>Modules:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(<span class="fu">V</span>(g)<span class="sc">$</span>module))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 12</code></pre>
+</div>
+</div>
+<p><strong>Density:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">edge_density</span>(g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.05278965</code></pre>
+</div>
+</div>
+<p><strong>Transitivity:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transitivity</span>(g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.44486</code></pre>
 </div>
 </div>
 </section>
-<section id="feature-data-description" class="level2">
-<h2 class="anchored" data-anchor-id="feature-data-description">Feature Data Description</h2>
+<section id="over-representation-analysis-ora" class="level2">
+<h2 class="anchored" data-anchor-id="over-representation-analysis-ora">Over-Representation Analysis (ORA)</h2>
+<p>To biologically interpret the network modules, we perform Reactome over-representation analysis. For each module, the most significantly enriched pathway is used as a representative label. This links graph-based communities to biological processes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(feature_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>reactome_t2g <span class="ot">&lt;-</span> <span class="fu">msigdbr</span>(</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">species =</span> <span class="st">&quot;Homo sapiens&quot;</span>,</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">category =</span> <span class="st">&quot;C2&quot;</span>,</span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">subcategory =</span> <span class="st">&quot;REACTOME&quot;</span></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">term =</span> gs_name,</span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">gene =</span> entrez_gene</span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span>
+<span id="cb60-11"><a href="#cb60-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(reactome_t2g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>               Gene.Symbol
-1007_s_at DDR1 /// MIR4640
-1053_at               RFC2
-117_at               HSPA6
-1294_at   MIR5193 /// UBA7
-1316_at               THRA
-1405_i_at             CCL5
-                                                             Gene.Title
-1007_s_at discoidin domain receptor tyrosine kinase 1 /// microRNA 4640
-1053_at                     replication factor C (activator 1) 2, 40kDa
-117_at                             heat shock 70kDa protein 6 (HSP70B&#39;)
-1294_at   microRNA 5193 /// ubiquitin-like modifier activating enzyme 7
-1316_at                                 thyroid hormone receptor, alpha
-1405_i_at                                chemokine (C-C motif) ligand 5
-              ENTREZ_GENE_ID
-1007_s_at  780 /// 100616237
-1053_at                 5982
-117_at                  3310
-1294_at   7318 /// 100847079
-1316_at                 7067
-1405_i_at               6352</code></pre>
+<pre><code># A tibble: 6 × 2
+  term                             gene
+  &lt;chr&gt;                           &lt;int&gt;
+1 REACTOME_2_LTR_CIRCLE_FORMATION  8815
+2 REACTOME_2_LTR_CIRCLE_FORMATION  3159
+3 REACTOME_2_LTR_CIRCLE_FORMATION  3981
+4 REACTOME_2_LTR_CIRCLE_FORMATION 11168
+5 REACTOME_2_LTR_CIRCLE_FORMATION  7518
+6 REACTOME_2_LTR_CIRCLE_FORMATION  7520</code></pre>
 </div>
 </div>
-<p><strong>5 Columns:</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(feature_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] &quot;Gene.Symbol&quot;    &quot;Gene.Title&quot;     &quot;ENTREZ_GENE_ID&quot;</code></pre>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>mods <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(<span class="fu">V</span>(g)<span class="sc">$</span>module))</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>ora_results <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="st">&quot;list&quot;</span>, <span class="fu">length</span>(mods))</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(ora_results) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Module_&quot;</span>, mods)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<ul>
-<li><p><strong>Representative.Public.ID</strong>: Probe ID from the microarray platform</p></li>
-<li><p><strong>Gene.Symbol</strong>: The official gene symbol, following HUGO Gene Nomenclature Committee (HGNC) naming</p></li>
-<li><p><strong>Gene.Title</strong>: A longer, human-readable description of the gene.</p></li>
-<li><p><strong>ENTREZ_GENE_ID</strong>: The NCBI Entrez Gene identifier (A unique numeric ID for each gene)</p></li>
-<li><p><strong>RefSeq.Transcript.ID</strong>: One or more RefSeq transcript accession numbers that correspond to the gene or probe.</p></li>
-</ul>
-<p><strong>Number of Genes</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(feature_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(mods)) {</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> mods[i]</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>  mod_genes <span class="ot">&lt;-</span> nodes_out<span class="sc">$</span>symbol[</span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>    nodes_out<span class="sc">$</span>module <span class="sc">==</span> m</span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>  ]</span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">enrich_module</span>(</span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">genes_symbol =</span> mod_genes,</span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">universe_symbol =</span> universe_symbols,</span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">tag =</span> tag,</span>
+<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">mod_id =</span> m,</span>
+<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">output_dir =</span> <span class="st">&quot;.&quot;</span></span>
+<span id="cb63-14"><a href="#cb63-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb63-15"><a href="#cb63-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb63-16"><a href="#cb63-16" aria-hidden="true" tabindex="-1"></a>  ora_results[[i]] <span class="ot">&lt;-</span> res</span>
+<span id="cb63-17"><a href="#cb63-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb63-18"><a href="#cb63-18" aria-hidden="true" tabindex="-1"></a>ora_results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 26468</code></pre>
+<pre><code>$Module_1
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:588] &quot;1&quot; &quot;30&quot; &quot;1636&quot; &quot;55331&quot; &quot;47&quot; &quot;48&quot; &quot;10120&quot; &quot;100&quot; &quot;161823&quot; &quot;102&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...44 enriched terms found
+&#39;data.frame&#39;:   44 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_NEUTROPHIL_DEGRANULATION&quot; &quot;REACTOME_ION_CHANNEL_TRANSPORT&quot; &quot;REACTOME_SPHINGOLIPID_METABOLISM&quot; &quot;REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS&quot; ...
+ $ Description   : chr  &quot;REACTOME_NEUTROPHIL_DEGRANULATION&quot; &quot;REACTOME_ION_CHANNEL_TRANSPORT&quot; &quot;REACTOME_SPHINGOLIPID_METABOLISM&quot; &quot;REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS&quot; ...
+ $ GeneRatio     : chr  &quot;258/588&quot; &quot;101/588&quot; &quot;58/588&quot; &quot;51/588&quot; ...
+ $ BgRatio       : chr  &quot;401/7857&quot; &quot;117/7857&quot; &quot;73/7857&quot; &quot;59/7857&quot; ...
+ $ RichFactor    : num  0.643 0.863 0.795 0.864 0.806 ...
+ $ FoldEnrichment: num  8.6 11.5 10.6 11.6 10.8 ...
+ $ zScore        : num  44.4 32.7 23.5 23.1 22 ...
+ $ pvalue        : num  3.42e-209 2.89e-99 1.74e-52 6.08e-50 6.49e-46 ...
+ $ p.adjust      : num  1.19e-206 5.02e-97 2.01e-50 5.28e-48 4.50e-44 ...
+ $ qvalue        : num  1.07e-206 4.51e-97 1.80e-50 4.74e-48 4.04e-44 ...
+ $ geneID        : chr  &quot;1/30/47/10120/102/101/175/178/10555/210/221/226/230/272/196527/290/317/327/353/127829/25852/410/427/83858/23250&quot;| __truncated__ &quot;55107/55129/203859/196527/57719/338440/444/57194/57205/23250/23200/286410/57130/23400/84239/344905/476/477/481/&quot;| __truncated__ &quot;55331/221/222/410/414/22901/79642/153642/427/8706/64781/29956/79603/91012/253782/80772/5476/8560/123099/339221/&quot;| __truncated__ &quot;419/683/1043/1048/1087/5067/152330/1368/2215/2813/8733/2822/8581/4061/54742/27076/130576/266727/10232/257194/51&quot;| __truncated__ ...
+ $ Count         : int  258 101 58 51 50 47 32 31 27 23 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_2
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:1021] &quot;2&quot; &quot;14&quot; &quot;18&quot; &quot;10257&quot; &quot;6833&quot; &quot;6059&quot; &quot;26090&quot; &quot;57406&quot; &quot;2532&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...317 enriched terms found
+&#39;data.frame&#39;:   317 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_SIGNALING_BY_GPCR&quot; &quot;REACTOME_SIGNALING_BY_INTERLEUKINS&quot; &quot;REACTOME_GPCR_LIGAND_BINDING&quot; &quot;REACTOME_G_ALPHA_I_SIGNALLING_EVENTS&quot; ...
+ $ Description   : chr  &quot;REACTOME_SIGNALING_BY_GPCR&quot; &quot;REACTOME_SIGNALING_BY_INTERLEUKINS&quot; &quot;REACTOME_GPCR_LIGAND_BINDING&quot; &quot;REACTOME_G_ALPHA_I_SIGNALLING_EVENTS&quot; ...
+ $ GeneRatio     : chr  &quot;290/1021&quot; &quot;263/1021&quot; &quot;179/1021&quot; &quot;162/1021&quot; ...
+ $ BgRatio       : chr  &quot;376/7857&quot; &quot;369/7857&quot; &quot;188/7857&quot; &quot;172/7857&quot; ...
+ $ RichFactor    : num  0.771 0.713 0.952 0.942 0.971 ...
+ $ FoldEnrichment: num  5.94 5.48 7.33 7.25 7.47 ...
+ $ zScore        : num  37.9 34.1 33.9 32 29.5 ...
+ $ pvalue        : num  1.72e-192 4.48e-158 2.59e-151 2.88e-134 4.46e-115 ...
+ $ p.adjust      : num  1.29e-189 1.69e-155 6.50e-149 5.42e-132 6.71e-113 ...
+ $ qvalue        : num  7.59e-190 9.91e-156 3.82e-149 3.19e-132 3.94e-113 ...
+ $ geneID        : chr  &quot;26090/57406/2532/57007/51554/107/108/109/196883/112/113/115/133/134/136/140/150/152/153/183/10768/301/8862/187/&quot;| __truncated__ &quot;9049/240/301/302/351/466/10538/596/598/604/29760/54014/834/836/6356/6363/6347/6364/6367/6351/6352/1230/729230/1&quot;| __truncated__ &quot;2532/57007/51554/133/134/136/140/150/152/153/183/301/8862/187/351/552/624/718/719/727/728/10203/846/887/6356/63&quot;| __truncated__ &quot;57007/107/108/109/196883/112/113/115/134/140/150/152/183/10768/301/8862/187/351/624/718/719/727/728/801/817/818&quot;| __truncated__ ...
+ $ Count         : int  290 263 179 162 133 152 231 108 86 139 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_3
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:570] &quot;8086&quot; &quot;25&quot; &quot;10121&quot; &quot;23536&quot; &quot;134637&quot; &quot;113179&quot; &quot;83440&quot; &quot;340351&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...185 enriched terms found
+&#39;data.frame&#39;:   185 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_CELL_CYCLE_MITOTIC&quot; &quot;REACTOME_M_PHASE&quot; &quot;REACTOME_MITOTIC_PROMETAPHASE&quot; &quot;REACTOME_MITOTIC_METAPHASE_AND_ANAPHASE&quot; ...
+ $ Description   : chr  &quot;REACTOME_CELL_CYCLE_MITOTIC&quot; &quot;REACTOME_M_PHASE&quot; &quot;REACTOME_MITOTIC_PROMETAPHASE&quot; &quot;REACTOME_MITOTIC_METAPHASE_AND_ANAPHASE&quot; ...
+ $ GeneRatio     : chr  &quot;350/570&quot; &quot;259/570&quot; &quot;176/570&quot; &quot;159/570&quot; ...
+ $ BgRatio       : chr  &quot;491/7857&quot; &quot;353/7857&quot; &quot;186/7857&quot; &quot;215/7857&quot; ...
+ $ RichFactor    : num  0.713 0.734 0.946 0.74 0.819 ...
+ $ FoldEnrichment: num  9.83 10.11 13.04 10.19 11.29 ...
+ $ zScore        : num  56.5 49 46.5 38.2 38.7 ...
+ $ pvalue        : num  0.00 1.15e-238 9.14e-198 8.82e-141 1.20e-139 ...
+ $ p.adjust      : num  0.00 2.92e-236 1.54e-195 1.12e-138 1.21e-137 ...
+ $ qvalue        : num  0.00 1.89e-236 9.97e-196 7.22e-139 7.83e-138 ...
+ $ geneID        : chr  &quot;8086/25/10121/25909/84962/10142/7840/10393/51529/25906/119504/29882/29945/51433/51434/23141/10776/6790/9212/881&quot;| __truncated__ &quot;8086/10121/25909/10142/7840/10393/51529/25906/119504/29882/29945/51433/51434/23141/10776/9212/8815/332/8548/699&quot;| __truncated__ &quot;10121/25909/10142/7840/9212/332/699/701/9184/891/9133/9738/991/113130/55143/983/55755/1058/1060/1062/1063/64946&quot;| __truncated__ &quot;25909/10393/51529/25906/119504/29882/29945/51433/51434/23141/9212/8815/332/699/701/9184/200014/891/9133/8881/99&quot;| __truncated__ ...
+ $ Count         : int  350 259 176 159 145 106 99 120 145 82 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_4
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:723] &quot;65985&quot; &quot;51166&quot; &quot;60496&quot; &quot;10157&quot; &quot;4363&quot; &quot;215&quot; &quot;5826&quot; &quot;55347&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...82 enriched terms found
+&#39;data.frame&#39;:   82 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_SLC_MEDIATED_TRANSMEMBRANE_TRANSPORT&quot; &quot;REACTOME_FATTY_ACID_METABOLISM&quot; &quot;REACTOME_PHOSPHOLIPID_METABOLISM&quot; &quot;REACTOME_BIOLOGICAL_OXIDATIONS&quot; ...
+ $ Description   : chr  &quot;REACTOME_SLC_MEDIATED_TRANSMEMBRANE_TRANSPORT&quot; &quot;REACTOME_FATTY_ACID_METABOLISM&quot; &quot;REACTOME_PHOSPHOLIPID_METABOLISM&quot; &quot;REACTOME_BIOLOGICAL_OXIDATIONS&quot; ...
+ $ GeneRatio     : chr  &quot;151/723&quot; &quot;107/723&quot; &quot;116/723&quot; &quot;97/723&quot; ...
+ $ BgRatio       : chr  &quot;160/7857&quot; &quot;133/7857&quot; &quot;172/7857&quot; &quot;131/7857&quot; ...
+ $ RichFactor    : num  0.944 0.805 0.674 0.74 0.944 ...
+ $ FoldEnrichment: num  10.26 8.74 7.33 8.05 10.26 ...
+ $ zScore        : num  37.7 28.7 26.7 25.9 25.1 ...
+ $ pvalue        : num  5.29e-150 2.59e-88 8.20e-81 1.17e-73 1.32e-66 ...
+ $ p.adjust      : num  1.15e-147 2.81e-86 5.93e-79 6.35e-72 5.71e-65 ...
+ $ qvalue        : num  7.35e-148 1.80e-86 3.80e-79 4.06e-72 3.66e-65 ...
+ $ geneID        : chr  &quot;23382/347/402/23568/682/1356/1497/133418/9843/286256/51248/57127/4891/6557/6558/6560/9990/10723/9058/64849/6564&quot;| __truncated__ &quot;4363/215/10449/31/32/80724/33/34/35/37/79777/84320/26027/55856/122970/11332/10005/23597/51/8309/8310/80221/2180&quot;| __truncated__ &quot;171586/63874/51205/55750/10554/56895/55326/10423/1040/8760/10390/1119/1120/56994/27132/54675/80821/23259/84649/&quot;| __truncated__ &quot;55347/84836/54988/84532/125/126/127/128/10327/8574/22977/216/219/8639/57412/670/10380/874/8824/79094/494143/134&quot;| __truncated__ ...
+ $ Count         : int  151 107 116 97 68 80 93 89 71 55 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_5
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:685] &quot;22848&quot; &quot;64746&quot; &quot;59272&quot; &quot;60&quot; &quot;55860&quot; &quot;10097&quot; &quot;10096&quot; &quot;51094&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...109 enriched terms found
+&#39;data.frame&#39;:   109 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_ASPARAGINE_N_LINKED_GLYCOSYLATION&quot; &quot;REACTOME_INTRA_GOLGI_AND_RETROGRADE_GOLGI_TO_ER_TRAFFIC&quot; &quot;REACTOME_CLATHRIN_MEDIATED_ENDOCYTOSIS&quot; &quot;REACTOME_TRANSPORT_TO_THE_GOLGI_AND_SUBSEQUENT_MODIFICATION&quot; ...
+ $ Description   : chr  &quot;REACTOME_ASPARAGINE_N_LINKED_GLYCOSYLATION&quot; &quot;REACTOME_INTRA_GOLGI_AND_RETROGRADE_GOLGI_TO_ER_TRAFFIC&quot; &quot;REACTOME_CLATHRIN_MEDIATED_ENDOCYTOSIS&quot; &quot;REACTOME_TRANSPORT_TO_THE_GOLGI_AND_SUBSEQUENT_MODIFICATION&quot; ...
+ $ GeneRatio     : chr  &quot;209/685&quot; &quot;149/685&quot; &quot;120/685&quot; &quot;133/685&quot; ...
+ $ BgRatio       : chr  &quot;266/7857&quot; &quot;179/7857&quot; &quot;131/7857&quot; &quot;162/7857&quot; ...
+ $ RichFactor    : num  0.786 0.832 0.916 0.821 0.938 ...
+ $ FoldEnrichment: num  9.01 9.55 10.51 9.42 10.76 ...
+ $ zScore        : num  41.1 35.8 33.9 33.5 32.3 ...
+ $ pvalue        : num  3.40e-179 1.94e-132 3.76e-117 4.41e-116 4.20e-106 ...
+ $ p.adjust      : num  1.65e-176 4.72e-130 6.09e-115 5.36e-114 4.08e-104 ...
+ $ qvalue        : num  1.29e-176 3.70e-130 4.77e-115 4.20e-114 3.20e-104 ...
+ $ geneID        : chr  &quot;55860/56052/84920/79087/79868/199857/85365/10195/29880/29929/79053/79796/267/287/288/23243/372/374/375/377/378/&quot;| __truncated__ &quot;55860/56894/372/375/377/378/381/55738/84364/26286/23647/10139/400/51272/636/23299/662/829/830/832/9382/22796/83&quot;| __truncated__ &quot;22848/60/10097/10096/154/3267/185/273/160/161/163/1173/1175/374/382/55738/10552/10109/10094/10093/10092/408/409&quot;| __truncated__ &quot;55860/287/288/23243/372/374/375/377/378/381/55738/84364/26286/8704/8703/8702/10282/51272/829/830/832/1604/966/9&quot;| __truncated__ ...
+ $ Count         : int  209 149 120 133 106 112 83 77 88 63 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_6
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:974] &quot;57505&quot; &quot;10057&quot; &quot;3983&quot; &quot;84448&quot; &quot;22885&quot; &quot;176&quot; &quot;8038&quot; &quot;8751&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...132 enriched terms found
+&#39;data.frame&#39;:   132 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_RRNA_PROCESSING&quot; &quot;REACTOME_EXTRACELLULAR_MATRIX_ORGANIZATION&quot; &quot;REACTOME_NERVOUS_SYSTEM_DEVELOPMENT&quot; &quot;REACTOME_EUKARYOTIC_TRANSLATION_INITIATION&quot; ...
+ $ Description   : chr  &quot;REACTOME_RRNA_PROCESSING&quot; &quot;REACTOME_EXTRACELLULAR_MATRIX_ORGANIZATION&quot; &quot;REACTOME_NERVOUS_SYSTEM_DEVELOPMENT&quot; &quot;REACTOME_EUKARYOTIC_TRANSLATION_INITIATION&quot; ...
+ $ GeneRatio     : chr  &quot;158/974&quot; &quot;172/974&quot; &quot;237/974&quot; &quot;91/974&quot; ...
+ $ BgRatio       : chr  &quot;170/7857&quot; &quot;244/7857&quot; &quot;467/7857&quot; &quot;94/7857&quot; ...
+ $ RichFactor    : num  0.929 0.705 0.507 0.968 0.876 ...
+ $ FoldEnrichment: num  7.5 5.69 4.09 7.81 7.07 ...
+ $ zScore        : num  32.2 28 25.9 25 21.7 ...
+ $ pvalue        : num  8.11e-132 3.00e-103 7.96e-99 6.37e-80 1.13e-59 ...
+ $ p.adjust      : num  3.18e-129 5.88e-101 1.04e-96 6.24e-78 7.39e-58 ...
+ $ qvalue        : num  2.12e-129 3.92e-101 6.93e-97 4.16e-78 4.92e-58 ...
+ $ geneID        : chr  &quot;9790/705/10438/25879/9188/54555/11056/57647/27292/22894/60528/10436/90459/51013/5394/23404/51010/54512/56915/11&quot;| __truncated__ &quot;176/8038/8751/8754/9510/140766/170690/170692/9509/9508/11096/56999/375790/54829/63827/633/649/652/655/11132/147&quot;| __truncated__ &quot;3983/84448/22885/116986/375790/214/51107/83464/10095/9048/775/776/8913/8912/8911/782/784/10486/100133941/971/10&quot;| __truncated__ &quot;1964/1967/8892/8891/8890/8893/1965/8894/1968/8661/8662/8663/8664/3646/8665/8666/8667/8668/8669/27335/51386/1048&quot;| __truncated__ ...
+ $ Count         : int  158 172 237 91 78 78 72 77 136 82 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_7
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:405] &quot;26574&quot; &quot;5825&quot; &quot;10006&quot; &quot;10152&quot; &quot;27&quot; &quot;29&quot; &quot;91452&quot; &quot;58&quot; &quot;72&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...75 enriched terms found
+&#39;data.frame&#39;:   75 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_RHO_GTPASE_CYCLE&quot; &quot;REACTOME_RAC1_GTPASE_CYCLE&quot; &quot;REACTOME_CDC42_GTPASE_CYCLE&quot; &quot;REACTOME_RHOA_GTPASE_CYCLE&quot; ...
+ $ Description   : chr  &quot;REACTOME_RHO_GTPASE_CYCLE&quot; &quot;REACTOME_RAC1_GTPASE_CYCLE&quot; &quot;REACTOME_CDC42_GTPASE_CYCLE&quot; &quot;REACTOME_RHOA_GTPASE_CYCLE&quot; ...
+ $ GeneRatio     : chr  &quot;363/405&quot; &quot;160/405&quot; &quot;136/405&quot; &quot;125/405&quot; ...
+ $ BgRatio       : chr  &quot;419/7857&quot; &quot;172/7857&quot; &quot;144/7857&quot; &quot;136/7857&quot; ...
+ $ RichFactor    : num  0.866 0.93 0.944 0.919 0.884 ...
+ $ FoldEnrichment: num  16.8 18 18.3 17.8 17.1 ...
+ $ zScore        : num  77.5 52.7 48.9 46.2 35.1 ...
+ $ pvalue        : num  0.00 3.72e-204 4.46e-174 4.41e-155 2.42e-89 ...
+ $ p.adjust      : num  0.00 8.20e-202 6.55e-172 4.86e-153 1.78e-87 ...
+ $ qvalue        : num  0.00 6.91e-202 5.52e-172 4.10e-153 1.50e-87 ...
+ $ geneID        : chr  &quot;5825/10006/10152/27/29/91452/87/120/9590/11214/224/347902/51479/22852/54443/116985/64411/392/79658/94134/55114/&quot;| __truncated__ &quot;10006/10152/27/29/347902/116985/64411/392/79658/94134/55114/57584/58504/57636/83478/9938/23092/201176/9411/2571&quot;| __truncated__ &quot;29/116985/64411/392/79658/55114/57584/58504/83478/23092/201176/9411/257106/57514/9743/115703/2909/80728/393/143&quot;| __truncated__ &quot;5825/29/91452/11214/54443/116985/64411/392/79658/93663/84986/57584/58504/57636/83478/23092/79822/9411/257106/57&quot;| __truncated__ ...
+ $ Count         : int  363 160 136 125 76 76 64 60 61 54 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_8
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:1218] &quot;19&quot; &quot;8714&quot; &quot;28976&quot; &quot;39&quot; &quot;65057&quot; &quot;55902&quot; &quot;86&quot; &quot;91&quot; &quot;130399&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...225 enriched terms found
+&#39;data.frame&#39;:   225 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_TRANSCRIPTIONAL_REGULATION_BY_TP53&quot; &quot;REACTOME_DNA_REPAIR&quot; &quot;REACTOME_CHROMATIN_MODIFYING_ENZYMES&quot; &quot;REACTOME_REGULATION_OF_TP53_ACTIVITY&quot; ...
+ $ Description   : chr  &quot;REACTOME_TRANSCRIPTIONAL_REGULATION_BY_TP53&quot; &quot;REACTOME_DNA_REPAIR&quot; &quot;REACTOME_CHROMATIN_MODIFYING_ENZYMES&quot; &quot;REACTOME_REGULATION_OF_TP53_ACTIVITY&quot; ...
+ $ GeneRatio     : chr  &quot;275/1218&quot; &quot;179/1218&quot; &quot;153/1218&quot; &quot;121/1218&quot; ...
+ $ BgRatio       : chr  &quot;342/7857&quot; &quot;285/7857&quot; &quot;216/7857&quot; &quot;149/7857&quot; ...
+ $ RichFactor    : num  0.804 0.628 0.708 0.812 0.892 ...
+ $ FoldEnrichment: num  5.19 4.05 4.57 5.24 5.76 ...
+ $ zScore        : num  33.9 22.5 22.8 22.4 20.7 ...
+ $ pvalue        : num  1.70e-167 4.60e-77 6.14e-77 1.27e-72 3.67e-62 ...
+ $ p.adjust      : num  1.01e-164 1.22e-74 1.22e-74 1.89e-70 4.37e-60 ...
+ $ qvalue        : num  6.45e-165 7.76e-75 7.76e-75 1.20e-70 2.78e-60 ...
+ $ geneID        : chr  &quot;26523/27161/192669/192670/84883/207/208/10000/1820/1386/472/545/54971/580/581/79370/637/641/665/672/23774/29117&quot;| __truncated__ &quot;65057/86/328/472/545/29086/580/9031/641/672/675/79184/83990/902/1022/9557/1111/11200/9937/64858/64421/1763/8178&quot;| __truncated__ &quot;86/121536/8289/57492/196528/51742/84159/55870/9070/1386/55729/56970/23774/10902/7862/27154/10498/1107/1108/9575&quot;| __truncated__ &quot;207/208/10000/472/545/54971/580/641/672/23774/29117/83990/7862/27154/900/1020/8851/1029/1107/1108/1111/11200/14&quot;| __truncated__ ...
+ $ Count         : int  275 179 153 121 91 86 90 96 85 65 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_9
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:771] &quot;26154&quot; &quot;20&quot; &quot;21&quot; &quot;24&quot; &quot;23461&quot; &quot;23460&quot; &quot;10347&quot; &quot;10351&quot; &quot;10350&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...203 enriched terms found
+&#39;data.frame&#39;:   203 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_CLASS_I_MHC_MEDIATED_ANTIGEN_PROCESSING_PRESENTATION&quot; &quot;REACTOME_ANTIGEN_PROCESSING_UBIQUITINATION_PROTEASOME_DEGRADATION&quot; &quot;REACTOME_NEDDYLATION&quot; &quot;REACTOME_DEUBIQUITINATION&quot; ...
+ $ Description   : chr  &quot;REACTOME_CLASS_I_MHC_MEDIATED_ANTIGEN_PROCESSING_PRESENTATION&quot; &quot;REACTOME_ANTIGEN_PROCESSING_UBIQUITINATION_PROTEASOME_DEGRADATION&quot; &quot;REACTOME_NEDDYLATION&quot; &quot;REACTOME_DEUBIQUITINATION&quot; ...
+ $ GeneRatio     : chr  &quot;288/771&quot; &quot;246/771&quot; &quot;180/771&quot; &quot;174/771&quot; ...
+ $ BgRatio       : chr  &quot;335/7857&quot; &quot;269/7857&quot; &quot;204/7857&quot; &quot;236/7857&quot; ...
+ $ RichFactor    : num  0.86 0.914 0.882 0.737 0.768 ...
+ $ FoldEnrichment: num  8.76 9.32 8.99 7.51 7.83 ...
+ $ zScore        : num  47.9 45.8 38.1 33.5 29.2 ...
+ $ pvalue        : num  3.34e-259 7.45e-234 5.52e-161 6.82e-129 5.01e-96 ...
+ $ p.adjust      : num  1.85e-256 2.06e-231 1.02e-158 9.43e-127 5.54e-94 ...
+ $ qvalue        : num  1.17e-256 1.31e-231 6.47e-159 5.99e-127 3.52e-94 ...
+ $ geneID        : chr  &quot;25847/9870/10425/51665/79754/140459/140460/140461/140462/10533/567/642/53339/90135/695/8945/811/821/868/899/929&quot;| __truncated__ &quot;25847/9870/10425/51665/79754/140459/140460/140461/140462/10533/642/53339/90135/8945/868/899/997/8454/8453/8452/&quot;| __truncated__ &quot;122416/51665/79754/140459/140460/140461/140462/53339/90135/8945/28952/83987/899/150684/51397/51122/54939/28991/&quot;| __truncated__ &quot;79913/93973/11047/324/171023/55252/4287/6314/8312/8313/8314/8678/329/330/1540/1643/23586/23770/221937/3607/4303&quot;| __truncated__ ...
+ $ Count         : int  288 246 180 174 126 79 114 83 130 75 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_11
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:177] &quot;10189&quot; &quot;9716&quot; &quot;10286&quot; &quot;8896&quot; &quot;55749&quot; &quot;10421&quot; &quot;51362&quot; &quot;988&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...18 enriched terms found
+&#39;data.frame&#39;:   18 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_PROCESSING_OF_CAPPED_INTRON_CONTAINING_PRE_MRNA&quot; &quot;REACTOME_MRNA_SPLICING&quot; &quot;REACTOME_RNA_POLYMERASE_II_TRANSCRIPTION_TERMINATION&quot; &quot;REACTOME_TRANSPORT_OF_MATURE_TRANSCRIPT_TO_CYTOPLASM&quot; ...
+ $ Description   : chr  &quot;REACTOME_PROCESSING_OF_CAPPED_INTRON_CONTAINING_PRE_MRNA&quot; &quot;REACTOME_MRNA_SPLICING&quot; &quot;REACTOME_RNA_POLYMERASE_II_TRANSCRIPTION_TERMINATION&quot; &quot;REACTOME_TRANSPORT_OF_MATURE_TRANSCRIPT_TO_CYTOPLASM&quot; ...
+ $ GeneRatio     : chr  &quot;174/177&quot; &quot;156/177&quot; &quot;54/177&quot; &quot;41/177&quot; ...
+ $ BgRatio       : chr  &quot;225/7857&quot; &quot;177/7857&quot; &quot;56/7857&quot; &quot;72/7857&quot; ...
+ $ RichFactor    : num  0.773 0.881 0.964 0.569 0.706 ...
+ $ FoldEnrichment: num  34.3 39.1 42.8 25.3 31.3 ...
+ $ zScore        : num  77 77.9 47.7 31.4 33 ...
+ $ pvalue        : num  8.37e-305 6.12e-278 2.34e-90 2.74e-50 2.88e-49 ...
+ $ p.adjust      : num  8.20e-303 3.00e-276 7.65e-89 6.71e-49 5.65e-48 ...
+ $ qvalue        : num  6.78e-303 2.48e-276 6.32e-89 5.55e-49 4.67e-48 ...
+ $ geneID        : chr  &quot;10189/9716/10286/8896/55749/10421/51362/988/10523/26097/10978/53981/51692/10898/51340/1477/1478/23283/1479/5625&quot;| __truncated__ &quot;10189/9716/10286/8896/55749/10421/51362/988/10523/10978/53981/51692/10898/51340/1477/1478/23283/1479/56259/5150&quot;| __truncated__ &quot;10189/51362/26097/10978/53981/51692/10898/1477/1478/23283/1479/10212/9785/9775/81608/84248/84967/134353/55110/4&quot;| __truncated__ &quot;10189/51362/26097/53981/51692/10898/10212/9785/9775/1977/81608/84248/2733/55110/4686/22916/10482/29107/84271/99&quot;| __truncated__ ...
+ $ Count         : int  174 156 54 41 36 25 16 11 11 6 ...
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_13
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:91] &quot;54998&quot; &quot;118487&quot; &quot;7818&quot; &quot;26284&quot; &quot;90480&quot; &quot;85476&quot; &quot;84340&quot; &quot;65008&quot; ...
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...2 enriched terms found
+&#39;data.frame&#39;:   2 obs. of  12 variables:
+ $ ID            : chr  &quot;REACTOME_MITOCHONDRIAL_TRANSLATION&quot; &quot;REACTOME_TRANSLATION&quot;
+ $ Description   : chr  &quot;REACTOME_MITOCHONDRIAL_TRANSLATION&quot; &quot;REACTOME_TRANSLATION&quot;
+ $ GeneRatio     : chr  &quot;91/91&quot; &quot;91/91&quot;
+ $ BgRatio       : chr  &quot;92/7857&quot; &quot;259/7857&quot;
+ $ RichFactor    : num  0.989 0.351
+ $ FoldEnrichment: num  85.4 30.3
+ $ zScore        : num  88.1 52
+ $ pvalue        : num  7.14e-213 3.35e-143
+ $ p.adjust      : num  5.00e-212 1.17e-142
+ $ qvalue        : num  3.76e-212 8.81e-143
+ $ geneID        : chr  &quot;54998/118487/7818/26284/90480/85476/84340/65008/124995/65003/6182/28998/64928/29088/54948/63875/29074/9801/5106&quot;| __truncated__ &quot;54998/118487/7818/26284/90480/85476/84340/65008/124995/65003/6182/28998/64928/29088/54948/63875/29074/9801/5106&quot;| __truncated__
+ $ Count         : int  91 91
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 
+
+
+$Module_14
+#
+# over-representation test
+#
+#...@organism    UNKNOWN 
+#...@ontology    UNKNOWN 
+#...@gene    chr [1:8] &quot;1465&quot; &quot;4493&quot; &quot;4494&quot; &quot;4495&quot; &quot;4496&quot; &quot;4499&quot; &quot;4501&quot; &quot;4504&quot;
+#...pvalues adjusted by &#39;BH&#39; with cutoff &lt;0.05 
+#...1 enriched terms found
+&#39;data.frame&#39;:   1 obs. of  12 variables:
+ $ ID            : chr &quot;REACTOME_RESPONSE_TO_METAL_IONS&quot;
+ $ Description   : chr &quot;REACTOME_RESPONSE_TO_METAL_IONS&quot;
+ $ GeneRatio     : chr &quot;8/8&quot;
+ $ BgRatio       : chr &quot;10/7857&quot;
+ $ RichFactor    : num 0.8
+ $ FoldEnrichment: num 786
+ $ zScore        : num 79.3
+ $ pvalue        : num 1.25e-25
+ $ p.adjust      : num 1.25e-25
+ $ qvalue        : logi NA
+ $ geneID        : chr &quot;1465/4493/4494/4495/4496/4499/4501/4504&quot;
+ $ Count         : int 8
+#...Citation
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using clusterProfiler to characterize multiomics data. Nature Protocols. 2024, 19(11):3292-3320 </code></pre>
 </div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>module_enrich_df <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">seq_along</span>(ora_results),</span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">function</span>(i) {</span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>      res <span class="ot">&lt;-</span> ora_results[[i]]</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">is.null</span>(res)) {</span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>      df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(res)</span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">nrow</span>(df) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a>        <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a>      df<span class="sc">$</span>module <span class="ot">&lt;-</span> mods[i]</span>
+<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a>      df</span>
+<span id="cb65-19"><a href="#cb65-19" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb65-20"><a href="#cb65-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb65-21"><a href="#cb65-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb65-22"><a href="#cb65-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-23"><a href="#cb65-23" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(module_enrich_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                                                                                                                     ID
+REACTOME_NEUTROPHIL_DEGRANULATION                                                                                     REACTOME_NEUTROPHIL_DEGRANULATION
+REACTOME_ION_CHANNEL_TRANSPORT                                                                                           REACTOME_ION_CHANNEL_TRANSPORT
+REACTOME_SPHINGOLIPID_METABOLISM                                                                                       REACTOME_SPHINGOLIPID_METABOLISM
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS
+REACTOME_STIMULI_SENSING_CHANNELS                                                                                     REACTOME_STIMULI_SENSING_CHANNELS
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                                                               REACTOME_METABOLISM_OF_NUCLEOTIDES
+                                                                                                                                            Description
+REACTOME_NEUTROPHIL_DEGRANULATION                                                                                     REACTOME_NEUTROPHIL_DEGRANULATION
+REACTOME_ION_CHANNEL_TRANSPORT                                                                                           REACTOME_ION_CHANNEL_TRANSPORT
+REACTOME_SPHINGOLIPID_METABOLISM                                                                                       REACTOME_SPHINGOLIPID_METABOLISM
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS
+REACTOME_STIMULI_SENSING_CHANNELS                                                                                     REACTOME_STIMULI_SENSING_CHANNELS
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                                                               REACTOME_METABOLISM_OF_NUCLEOTIDES
+                                                                            GeneRatio
+REACTOME_NEUTROPHIL_DEGRANULATION                                             258/588
+REACTOME_ION_CHANNEL_TRANSPORT                                                101/588
+REACTOME_SPHINGOLIPID_METABOLISM                                               58/588
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS    51/588
+REACTOME_STIMULI_SENSING_CHANNELS                                              50/588
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                         47/588
+                                                                             BgRatio
+REACTOME_NEUTROPHIL_DEGRANULATION                                           401/7857
+REACTOME_ION_CHANNEL_TRANSPORT                                              117/7857
+REACTOME_SPHINGOLIPID_METABOLISM                                             73/7857
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS  59/7857
+REACTOME_STIMULI_SENSING_CHANNELS                                            62/7857
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                       82/7857
+                                                                            RichFactor
+REACTOME_NEUTROPHIL_DEGRANULATION                                            0.6433915
+REACTOME_ION_CHANNEL_TRANSPORT                                               0.8632479
+REACTOME_SPHINGOLIPID_METABOLISM                                             0.7945205
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS  0.8644068
+REACTOME_STIMULI_SENSING_CHANNELS                                            0.8064516
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                       0.5731707
+                                                                            FoldEnrichment
+REACTOME_NEUTROPHIL_DEGRANULATION                                                 8.597155
+REACTOME_ION_CHANNEL_TRANSPORT                                                   11.534929
+REACTOME_SPHINGOLIPID_METABOLISM                                                 10.616578
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS      11.550415
+REACTOME_STIMULI_SENSING_CHANNELS                                                10.776004
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                            7.658848
+                                                                              zScore
+REACTOME_NEUTROPHIL_DEGRANULATION                                           44.41425
+REACTOME_ION_CHANNEL_TRANSPORT                                              32.65173
+REACTOME_SPHINGOLIPID_METABOLISM                                            23.47646
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS 23.13428
+REACTOME_STIMULI_SENSING_CHANNELS                                           21.97866
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                      17.23883
+                                                                                   pvalue
+REACTOME_NEUTROPHIL_DEGRANULATION                                           3.421647e-209
+REACTOME_ION_CHANNEL_TRANSPORT                                               2.892068e-99
+REACTOME_SPHINGOLIPID_METABOLISM                                             1.736633e-52
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS  6.080770e-50
+REACTOME_STIMULI_SENSING_CHANNELS                                            6.491031e-46
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                       3.191209e-32
+                                                                                 p.adjust
+REACTOME_NEUTROPHIL_DEGRANULATION                                           1.187311e-206
+REACTOME_ION_CHANNEL_TRANSPORT                                               5.017737e-97
+REACTOME_SPHINGOLIPID_METABOLISM                                             2.008705e-50
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS  5.275068e-48
+REACTOME_STIMULI_SENSING_CHANNELS                                            4.504775e-44
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                       1.845582e-30
+                                                                                   qvalue
+REACTOME_NEUTROPHIL_DEGRANULATION                                           1.066113e-206
+REACTOME_ION_CHANNEL_TRANSPORT                                               4.505537e-97
+REACTOME_SPHINGOLIPID_METABOLISM                                             1.803661e-50
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS  4.736600e-48
+REACTOME_STIMULI_SENSING_CHANNELS                                            4.044937e-44
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                       1.657189e-30
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       geneID
+REACTOME_NEUTROPHIL_DEGRANULATION                                           1/30/47/10120/102/101/175/178/10555/210/221/226/230/272/196527/290/317/327/353/127829/25852/410/427/83858/23250/23200/10159/535/527/51382/10396/2683/51411/25798/683/684/79169/387263/51719/51806/820/55832/124583/10487/823/847/10694/11314/960/961/963/965/967/22918/8621/634/1084/4680/1675/1116/1118/160364/23601/54918/23412/29099/23406/8904/8895/55313/8804/10321/83716/1471/1476/5476/1508/1509/1512/1520/1727/84418/1650/1654/8560/51071/8694/23317/5611/80331/1774/79930/29952/6993/1915/1938/22875/23071/2171/2207/2212/2215/2219/10875/2268/2444/2517/2519/2548/2588/25801/8836/84514/2717/11010/2760/9535/51125/2821/53831/2896/2934/2950/2990/2992/3043/23593/3074/138050/3101/3240/10855/3310/84329/3417/3608/3614/3615/3683/3685/56888/8514/3903/3916/3920/3958/10288/11025/79888/116844/4057/4069/84061/4125/4126/25840/8972/4257/9761/4311/64386/4332/9961/93100/23218/23385/4758/150372/23114/387921/56954/10577/10562/4973/5004/94103/26578/5036/11240/11333/8566/5175/5211/5223/5236/55276/10857/5284/5315/5317/51316/5328/5329/80301/4860/5547/10549/9588/5645/5646/5663/80142/5787/5788/5795/5799/5806/29108/5834/5836/25797/5768/53917/9545/5912/57826/8635/6282/6278/6286/9522/6386/6402/12/1992/6317/5269/140885/6556/121260/11001/6515/6518/57153/6590/6727/114790/258010/9145/10312/6947/7077/11322/55754/9725/7130/10043/7226/81619/7305/201294/9218/10493/7414/8876/7520/2547/51646
+REACTOME_ION_CHANNEL_TRANSPORT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     55107/55129/203859/196527/57719/338440/444/57194/57205/23250/23200/286410/57130/23400/84239/344905/476/477/481/483/488/489/490/493/27032/9914/535/23545/50617/533/527/9114/8992/155066/523/525/526/528/245973/51382/529/90423/9550/51606/538/540/10396/51761/5205/57198/10079/374868/9635/1180/1181/1182/1183/1184/1186/1193/51076/2281/5348/5349/53826/57192/255231/55283/197259/259232/28962/5350/11035/6261/6263/6337/6338/6340/10110/133308/10312/53373/219931/8989/7220/26133/7226/54795/54822/79054/51393/59341/55503/1831/57348/94015/80727/65125/65268/65267/65266
+REACTOME_SPHINGOLIPID_METABOLISM                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  55331/221/222/410/414/22901/79642/153642/427/8706/64781/29956/79603/91012/253782/80772/5476/8560/123099/339221/57488/79152/2581/57704/2717/51228/2760/3074/2531/4758/94101/29095/94103/151742/5587/25865/23683/142891/259230/166929/8879/81537/130367/6609/6610/55512/124976/10558/9517/55304/171546/165679/412/285362/25870/7357/7368/9218
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     419/683/1043/1048/1087/5067/152330/1368/2215/2813/8733/2822/8581/4061/54742/27076/130576/266727/10232/257194/51299/80055/5277/9488/5279/5281/54872/5283/10026/9487/93183/23556/84720/51227/9091/94005/51604/128869/55650/284098/54965/80235/5329/10942/8000/8434/146760/7070/80328/8876/55350
+REACTOME_STIMULI_SENSING_CHANNELS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             55107/55129/203859/196527/57719/338440/444/9635/1180/1181/1182/1183/1184/1186/1193/2281/57192/255231/55283/197259/259232/28962/11035/6261/6263/6337/6338/6340/10110/133308/53373/219931/8989/7220/26133/7226/54795/54822/79054/51393/59341/55503/1831/57348/94015/80727/65125/65268/65267/65266
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    100/161823/132/56985/158/271/272/353/790/1633/1716/10591/1806/954/956/9583/955/57089/2618/2766/51292/8833/3251/3614/3615/3704/30833/22978/51251/4521/55270/131870/79873/11164/53343/10606/5198/4860/5471/7084/1890/83549/54963/7372/51733/7378/7498
+                                                                            Count
+REACTOME_NEUTROPHIL_DEGRANULATION                                             258
+REACTOME_ION_CHANNEL_TRANSPORT                                                101
+REACTOME_SPHINGOLIPID_METABOLISM                                               58
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS    51
+REACTOME_STIMULI_SENSING_CHANNELS                                              50
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                         47
+                                                                            module
+REACTOME_NEUTROPHIL_DEGRANULATION                                                1
+REACTOME_ION_CHANNEL_TRANSPORT                                                   1
+REACTOME_SPHINGOLIPID_METABOLISM                                                 1
+REACTOME_POST_TRANSLATIONAL_MODIFICATION_SYNTHESIS_OF_GPI_ANCHORED_PROTEINS      1
+REACTOME_STIMULI_SENSING_CHANNELS                                                1
+REACTOME_METABOLISM_OF_NUCLEOTIDES...6                                           1</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>module_summary <span class="ot">&lt;-</span> module_enrich_df <span class="sc">|&gt;</span></span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(module) <span class="sc">|&gt;</span></span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_sig_pathways =</span> <span class="fu">n</span>(),</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">top_term =</span> ID[<span class="fu">which.min</span>(p.adjust)],</span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">top_q =</span> <span class="fu">min</span>(p.adjust),</span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>module_summary <span class="ot">&lt;-</span> module_summary <span class="sc">|&gt;</span></span>
+<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb67-12"><a href="#cb67-12" aria-hidden="true" tabindex="-1"></a>    mod_DE_info,</span>
+<span id="cb67-13"><a href="#cb67-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">&quot;module&quot;</span></span>
+<span id="cb67-14"><a href="#cb67-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb67-15"><a href="#cb67-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(top_q)</span>
+<span id="cb67-16"><a href="#cb67-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-17"><a href="#cb67-17" aria-hidden="true" tabindex="-1"></a>module_summary <span class="ot">&lt;-</span> module_summary <span class="sc">|&gt;</span></span>
+<span id="cb67-18"><a href="#cb67-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb67-19"><a href="#cb67-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">module_label =</span> <span class="fu">str_replace_all</span>(</span>
+<span id="cb67-20"><a href="#cb67-20" aria-hidden="true" tabindex="-1"></a>      top_term,</span>
+<span id="cb67-21"><a href="#cb67-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;^REACTOME_&quot;</span>,</span>
+<span id="cb67-22"><a href="#cb67-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;&quot;</span></span>
+<span id="cb67-23"><a href="#cb67-23" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb67-24"><a href="#cb67-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">module_label =</span> <span class="fu">str_replace_all</span>(</span>
+<span id="cb67-25"><a href="#cb67-25" aria-hidden="true" tabindex="-1"></a>      module_label,</span>
+<span id="cb67-26"><a href="#cb67-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;_&quot;</span>,</span>
+<span id="cb67-27"><a href="#cb67-27" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot; &quot;</span></span>
+<span id="cb67-28"><a href="#cb67-28" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb67-29"><a href="#cb67-29" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb67-30"><a href="#cb67-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-31"><a href="#cb67-31" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(module_summary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 7
+  module n_sig_pathways top_term            top_q module_size  n_DE module_label
+   &lt;dbl&gt;          &lt;int&gt; &lt;chr&gt;               &lt;dbl&gt;       &lt;int&gt; &lt;int&gt; &lt;chr&gt;       
+1      3            185 REACTOME_CELL_… 0                 570   443 CELL CYCLE …
+2      7             75 REACTOME_RHO_G… 0                 405   294 RHO GTPASE …
+3     11             18 REACTOME_PROCE… 8.20e-303         177   147 PROCESSING …
+4      9            203 REACTOME_CLASS… 1.85e-256         771   557 CLASS I MHC…
+5     13              2 REACTOME_MITOC… 5.00e-212          91    66 MITOCHONDRI…
+6      1             44 REACTOME_NEUTR… 1.19e-206         588   367 NEUTROPHIL …</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>key_modules <span class="ot">&lt;-</span> module_summary <span class="sc">|&gt;</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>    n_sig_pathways <span class="sc">&gt;=</span> <span class="dv">2</span>,</span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>    top_q <span class="sc">&lt;</span> <span class="fl">0.05</span>,</span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>    n_DE <span class="sc">&gt;=</span> <span class="dv">3</span></span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(top_q)</span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>key_modules <span class="sc">|&gt;</span></span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a>    module,</span>
+<span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a>    module_size,</span>
+<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>    n_sig_pathways,</span>
+<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a>    top_q</span>
+<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 11 × 4
+   module module_size n_sig_pathways     top_q
+    &lt;dbl&gt;       &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;
+ 1      3         570            185 0        
+ 2      7         405             75 0        
+ 3     11         177             18 8.20e-303
+ 4      9         771            203 1.85e-256
+ 5     13          91              2 5.00e-212
+ 6      1         588             44 1.19e-206
+ 7      2        1021            317 1.29e-189
+ 8      5         685            109 1.65e-176
+ 9      8        1218            225 1.01e-164
+10      4         723             82 1.15e-147
+11      6         974            132 3.18e-129</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(key_modules)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 7
+  module n_sig_pathways top_term            top_q module_size  n_DE module_label
+   &lt;dbl&gt;          &lt;int&gt; &lt;chr&gt;               &lt;dbl&gt;       &lt;int&gt; &lt;int&gt; &lt;chr&gt;       
+1      3            185 REACTOME_CELL_… 0                 570   443 CELL CYCLE …
+2      7             75 REACTOME_RHO_G… 0                 405   294 RHO GTPASE …
+3     11             18 REACTOME_PROCE… 8.20e-303         177   147 PROCESSING …
+4      9            203 REACTOME_CLASS… 1.85e-256         771   557 CLASS I MHC…
+5     13              2 REACTOME_MITOC… 5.00e-212          91    66 MITOCHONDRI…
+6      1             44 REACTOME_NEUTR… 1.19e-206         588   367 NEUTROPHIL …</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>nodes_out <span class="ot">&lt;-</span> nodes_out <span class="sc">|&gt;</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>    module_summary <span class="sc">|&gt;</span></span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(module, module_label),</span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">&quot;module&quot;</span></span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>nodes_out <span class="ot">&lt;-</span> nodes_out <span class="sc">|&gt;</span></span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">in_key_module =</span> module <span class="sc">%in%</span> key_modules<span class="sc">$</span>module</span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(in_key_module, <span class="at">.after =</span> module)</span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(nodes_out)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 11
+  symbol hub   seed  module in_key_module degree strength betweenness  logFC
+  &lt;chr&gt;  &lt;lgl&gt; &lt;lgl&gt;  &lt;dbl&gt; &lt;lgl&gt;          &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;
+1 A1BG   FALSE FALSE      1 TRUE             588     1392  0.0000380   0.103
+2 A2M    FALSE FALSE      2 TRUE             409     1006  0.000360    1.41 
+3 AAAS   TRUE  FALSE      3 TRUE            1902     7631  0.00561    -0.177
+4 AACS   FALSE FALSE      4 TRUE               7       20  0           0.496
+5 AADAT  FALSE FALSE      4 TRUE              16       32  0.0000330  -0.366
+6 AAK1   FALSE FALSE      5 TRUE             553     1324  0.00000646  0.560
+# ℹ 2 more variables: adj.P.Val &lt;dbl&gt;, module_label &lt;chr&gt;</code></pre>
+</div>
+</div>
+<p><strong>Save Results</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>  key_modules,</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>    output_dir,</span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(tag, <span class="st">&quot;_key_modules_ranked.csv&quot;</span>)</span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="phenotype-data-description" class="level2">
-<h2 class="anchored" data-anchor-id="phenotype-data-description">Phenotype Data Description</h2>
+<section id="extraction-of-key-differentially-expressed-genes" class="level2">
+<h2 class="anchored" data-anchor-id="extraction-of-key-differentially-expressed-genes">Extraction of Key Differentially Expressed Genes</h2>
+<p>From the annotated network, we extract the top 20 upregulated and top 20 downregulated genes. These represent highly differentiated genes in the Tumor vs Healthy contrast and are used for summarizing key biological processes in the data.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(pheno_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>top20_up <span class="ot">&lt;-</span> nodes_out <span class="sc">|&gt;</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(logFC),</span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>    logFC <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(adj.P.Val),</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>    adj.P.Val <span class="sc">&lt;</span> <span class="fl">0.05</span></span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(logFC)) <span class="sc">|&gt;</span></span>
+<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">20</span>) <span class="sc">|&gt;</span></span>
+<span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">direction =</span> <span class="st">&quot;Upregulated&quot;</span>)</span>
+<span id="cb76-11"><a href="#cb76-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb76-12"><a href="#cb76-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(top20_up)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>               diagnosis subtype
-GSM1116084 Breast cancer   Basal
-GSM1116085 Breast cancer   Basal
-GSM1116086 Breast cancer    Her2
-GSM1116087 Breast cancer   Basal
-GSM1116088 Breast cancer    Her2
-GSM1116089 Breast cancer    Her2</code></pre>
+<pre><code># A tibble: 6 × 12
+  symbol hub   seed  module in_key_module degree strength  betweenness logFC
+  &lt;chr&gt;  &lt;lgl&gt; &lt;lgl&gt;  &lt;dbl&gt; &lt;lgl&gt;          &lt;dbl&gt;    &lt;dbl&gt;        &lt;dbl&gt; &lt;dbl&gt;
+1 PIGR   FALSE TRUE       1 TRUE             392      784 0.00000102    8.52
+2 ADIPOQ FALSE TRUE       8 TRUE              94      189 0.0000468     8.17
+3 SCARA5 FALSE TRUE       6 TRUE              30       73 0.0000000630  7.03
+4 RBP4   FALSE TRUE       6 TRUE              54      179 0.00000117    7.01
+5 LEP    FALSE TRUE       8 TRUE              97      216 0.0000443     6.94
+6 PLIN1  FALSE TRUE       8 TRUE             190      502 0.0000756     6.42
+# ℹ 3 more variables: adj.P.Val &lt;dbl&gt;, module_label &lt;chr&gt;, direction &lt;chr&gt;</code></pre>
 </div>
 </div>
-<p><strong>2 Columns:</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(pheno_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>top20_down <span class="ot">&lt;-</span> nodes_out <span class="sc">|&gt;</span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(logFC),</span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>    logFC <span class="sc">&lt;</span> <span class="dv">0</span>,</span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(adj.P.Val),</span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>    adj.P.Val <span class="sc">&lt;</span> <span class="fl">0.05</span></span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(logFC) <span class="sc">|&gt;</span></span>
+<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">20</span>) <span class="sc">|&gt;</span></span>
+<span id="cb78-10"><a href="#cb78-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">direction =</span> <span class="st">&quot;Downregulated&quot;</span>)</span>
+<span id="cb78-11"><a href="#cb78-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-12"><a href="#cb78-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(top20_down)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] &quot;diagnosis&quot; &quot;subtype&quot;  </code></pre>
+<pre><code># A tibble: 6 × 12
+  symbol  hub   seed  module in_key_module degree strength betweenness logFC
+  &lt;chr&gt;   &lt;lgl&gt; &lt;lgl&gt;  &lt;dbl&gt; &lt;lgl&gt;          &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt; &lt;dbl&gt;
+1 COL11A1 FALSE TRUE       6 TRUE             220      830  0.0000190  -7.67
+2 COL10A1 FALSE TRUE       6 TRUE             198      696  0.00000835 -7.34
+3 CXCL10  FALSE TRUE       2 TRUE             605     1671  0.000114   -6.71
+4 VCAN    FALSE TRUE       6 TRUE             347     1151  0.000206   -6.67
+5 RRM2    FALSE TRUE       3 TRUE             555     1439  0.000747   -6.64
+6 TOP2A   FALSE TRUE       3 TRUE             583     1589  0.000126   -6.41
+# ℹ 3 more variables: adj.P.Val &lt;dbl&gt;, module_label &lt;chr&gt;, direction &lt;chr&gt;</code></pre>
 </div>
 </div>
-<ul>
-<li><p><strong>Diagnosis</strong>: Breast cancer or healthy sample</p></li>
-<li><p><strong>Subtype</strong>: Breast cancer subtype</p></li>
-</ul>
-<p><strong>Number of Samples</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(pheno_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>combined_40 <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  top20_up,</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  top20_down</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(</span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(<span class="fu">abs</span>(logFC))</span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(combined_40)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 141</code></pre>
+<pre><code># A tibble: 6 × 12
+  symbol  hub   seed  module in_key_module degree strength  betweenness logFC
+  &lt;chr&gt;   &lt;lgl&gt; &lt;lgl&gt;  &lt;dbl&gt; &lt;lgl&gt;          &lt;dbl&gt;    &lt;dbl&gt;        &lt;dbl&gt; &lt;dbl&gt;
+1 PIGR    FALSE TRUE       1 TRUE             392      784 0.00000102    8.52
+2 ADIPOQ  FALSE TRUE       8 TRUE              94      189 0.0000468     8.17
+3 COL11A1 FALSE TRUE       6 TRUE             220      830 0.0000190    -7.67
+4 COL10A1 FALSE TRUE       6 TRUE             198      696 0.00000835   -7.34
+5 SCARA5  FALSE TRUE       6 TRUE              30       73 0.0000000630  7.03
+6 RBP4    FALSE TRUE       6 TRUE              54      179 0.00000117    7.01
+# ℹ 3 more variables: adj.P.Val &lt;dbl&gt;, module_label &lt;chr&gt;, direction &lt;chr&gt;</code></pre>
 </div>
 </div>
-<p><strong>Distribution of Diagnosis Values</strong></p>
+<p><strong>Save Resilts</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>pheno_data <span class="sc">|&gt;</span> <span class="fu">count</span>(diagnosis)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      diagnosis   n
-1 Breast cancer 130
-2       Healthy  11</code></pre>
-</div>
-</div>
-<p><strong>Distribution of Cancer Subtype Values</strong></p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>pheno_data <span class="sc">|&gt;</span> <span class="fu">count</span>(subtype)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>    subtype  n
-1     Basal 41
-2   Healthy 11
-3      Her2 30
-4 Luminal A 29
-5 Luminal B 30</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(</span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>  combined_40,</span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(</span>
+<span id="cb82-4"><a href="#cb82-4" aria-hidden="true" tabindex="-1"></a>    output_dir,</span>
+<span id="cb82-5"><a href="#cb82-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(tag, <span class="st">&quot;_top40_DE.csv&quot;</span>)</span>
+<span id="cb82-6"><a href="#cb82-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb82-7"><a href="#cb82-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>

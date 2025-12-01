@@ -1,7 +1,8 @@
 ---
 title: "Clean Data"
-format: html
-html:
+format: 
+  html:
+    self-contained: true
 ---
 
 # Clean Data
@@ -49,7 +50,9 @@ head(pheno_data)
 
 ## Feature Data Cleaning
 ```{r}
-missing_geneIDs <- (feature_data |> filter(`ENTREZ_GENE_ID` == ""))$ID
+missing_geneIDs <- feature_data |> 
+  filter(ENTREZ_GENE_ID == "") |> 
+  pull(ID)
 ```
 
 
@@ -62,7 +65,7 @@ head(feature_data)
 
 ## Gene Expression Data Cleaning
 ```{r}
-expr_data <- expr_data |> select(-cell_lines$geo_accession)
+expr_data <- expr_data |> select(-all_of(cell_lines |> pull(geo_accession)))
 expr_data <- expr_data[!(rownames(expr_data) %in% missing_geneIDs), ]
 ```
 

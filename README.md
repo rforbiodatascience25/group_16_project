@@ -12,8 +12,12 @@ Add yourself: *Name, Student Number, GitHub Username*
 
 4.  Magdalena Paulina Flaszynska, s253517, m4gd4f
 
+5.  Marios Topalis, s253721, marios-topalis
+
 ## Download Data
 
 The data for this project is downloaded in `01_load.qmd` . If the raw data file already exists, it will not be downloaded again.
 
 ## Presentation
+
+<https://raw.githack.com/rforbiodatascience25/group_16_project/main/doc/presentation.html>

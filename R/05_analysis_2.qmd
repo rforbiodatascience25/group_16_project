@@ -1,7 +1,8 @@
 ---
 title: "Differential Gene Expression Analysis"
-format: html
-editor: visual
+format: 
+  html:
+    self-contained: true
 ---
 
 # Differential Gene Expression Analysis
@@ -42,7 +43,7 @@ pheno_data <- read.csv(
 
 ```{r}
 
-groups <- as.factor(pheno_data$subtype)
+groups <- as.factor(pheno_data |> pull(subtype))
 design <- model.matrix(~ 0 + groups)
 
 clean_levels <- make.names(levels(groups))
@@ -61,7 +62,7 @@ contrast_matrix <- makeContrasts(
 fit_contrast <- contrasts.fit(fit, contrast_matrix)
 fit_ebayes <- eBayes(fit_contrast)
 
-print(summary(decideTests(fit_ebayes)))
+summary(decideTests(fit_ebayes))
 ```
 
 ## Preparing the Gene List
@@ -71,24 +72,25 @@ top_table <- topTable(fit_ebayes, coef = "Basal_vs_LumA", number = Inf)
 
 head(top_table)
 
-top_table$probe_id <- rownames(top_table)
+top_table <- top_table |> 
+  rownames_to_column(var = "probe_id")
 
 probe_to_gene_map <- data.frame(
   probe_id = rownames(feature_data),
-  gene_symbol = feature_data$"Gene.Symbol" )
+  gene_symbol = feature_data |> pull("Gene.Symbol") )
 
 res_with_symbols <- merge(top_table, probe_to_gene_map, by="probe_id")
 
-res_with_symbols <- res_with_symbols %>%
+res_with_symbols <- res_with_symbols |> 
   filter(!is.na(t) & !is.na(gene_symbol) & gene_symbol != "")
 
-res_ranked <- res_with_symbols %>%
-  group_by(gene_symbol) %>%
-  slice_max(order_by = abs(t), n = 1) %>%
+res_ranked <- res_with_symbols |> 
+  group_by(gene_symbol)  |> 
+  slice_max(order_by = abs(t), n = 1) |> 
   ungroup()
 
 stats <- res_ranked$t
-names(stats) <- res_ranked$gene_symbol
+names(stats) <- res_ranked |> pull(gene_symbol)
 
 stats <- sort(stats, decreasing = TRUE)
 
@@ -100,7 +102,7 @@ head(stats)
 ```{r}
 BP_df <- msigdbr(species = "human", category = "C5", subcategory = "BP")
 
-pathways <- split(BP_df$gene_symbol, f = BP_df$gs_name)
+pathways <- split(BP_df |> pull(gene_symbol), f = BP_df |> pull(gs_name))
 
 fgseaRes <- fgseaMultilevel(
   pathways = pathways,
@@ -116,40 +118,48 @@ head(fgseaRes[order(padj), ])
 ## The Enrichment Plot
 
 ```{r}
-fgseaRes_ordered <- fgseaRes[order(padj), ]
+fgseaRes_ordered <- fgseaRes |> 
+  arrange(padj)
 
-top_pathway_name <- fgseaRes_ordered$pathway[1]
-leading_edge_genes <- fgseaRes_ordered$leadingEdge[[1]]
-first_genes <- head(leading_edge_genes,10)
+top_pathway <- fgseaRes_ordere |> 
+  slice(1) |> 
+  select(pathway, leadingEdge)
+
+top_pathway_name <- top_pathway |> pull(pathway)
+leading_edge_genes <- top_pathway |> pull(leadingEdge)  |>  .[[1]]
+
+first_genes <- leading_edge_genes |> head(10)
 print(first_genes)
 
-plotEnrichment(pathways[[top_pathway_name]],
-               stats = stats) +
+plotEnrichment(pathways[[top_pathway_name]], stats = stats) +
   labs(title = top_pathway_name)
 ```
 
 ## Getting the Top Genes
 
 ```{r}
-top_5_gene_lists <- fgseaRes_ordered$leadingEdge[1:5]
 
-top_5_names <- fgseaRes_ordered$pathway[1:5]
+top_5 <- fgseaRes_ordered |> 
+  slice(1:5) |> 
+  select(pathway, leadingEdge)
 
-for (i in 1:5) {
-  print(head(top_5_gene_lists[[i]], 10))
-}
+top_5_names <- top_5 |> pull(pathway)
+top_5_gene_lists <- top_5 |> pull(leadingEdge)
+
+walk(top_5_gene_lists, ~ print(head(.x, 10)))
 ```
 
 ## Intersection Analysis of Core Enrichment Genes
 
 ```{r}
-core_drivers <- Reduce(intersect, top_5_gene_lists)
+core_drivers <- reduce(top_5_gene_lists, intersect)
 
-all_genes_flat <- unlist(top_5_gene_lists)      
-gene_counts <- table(all_genes_flat)      
-gene_counts_sorted <- sort(gene_counts, decreasing = TRUE) 
+res <- top_5_gene_lists |> 
+  flatten_chr() |> 
+  as_tibble()  |> 
+  count(value, sort = TRUE) |> 
+  filter(n >= 3)
 
-res <- gene_counts_sorted[gene_counts_sorted >= 3]
 res
 ```
 
@@ -162,12 +172,9 @@ fgseaRes_flat$leadingEdge <- sapply(fgseaRes_flat$leadingEdge, paste, collapse =
 
 write.csv(fgseaRes_flat, "../data/Top_GSEA_results_Basal_vs_LumA.csv", row.names = FALSE)
 
-
 top_5_gene_df <- map_dfr(top_5_gene_lists, ~as.data.frame(t(.x), .id="id"))
 write.csv(top_5_gene_df, "../data/Genes_from_Top_5_pathways.csv")
 write.csv(res, "../data/Intersected_Genes.csv", row.names = FALSE)
-
-library(ggplot2) 
 
 my_plot <- plotEnrichment(pathways[[top_pathway_name]], stats = stats) +
            labs(title = top_pathway_name)

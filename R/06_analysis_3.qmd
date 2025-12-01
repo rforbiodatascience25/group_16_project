@@ -1,6 +1,8 @@
 ---
 title: "Network Analysis"
-format: html
+format: 
+  html:
+    self-contained: true
 ---
 
 # Network Analysis
@@ -51,7 +53,7 @@ output_dir <- "../results"
 
 ## Differential Expression Analysis
 
-Analysis is performed using limma. It involves a linear model that is fitted for the Tumor vs Normal contrast and empirical Bayes shrinkage which is applied to stabilize variance estimates. All tested genes are carried forward to the network analysis, while significantly differentiated ones (e.g. FDR \< 0.05 and \|logFC\| \> 1) are later used as seed genes to anchor subnetworks.
+Analysis is performed using limma. It involves a linear model that is fitted for the Tumor vs Healthy contrast and empirical Bayes shrinkage which is applied to stabilize variance estimates. All tested genes are carried forward to the network analysis, while significantly differentiated ones (e.g. FDR \< 0.05 and \|logFC\| \> 1) are later used as seed genes to anchor subnetworks.
 
 **Set up Model**
 
@@ -73,19 +75,19 @@ fit_all <- expr_data |>
 **Get Results**
 
 ```{r}
-tt_tumor_vs_normal <- topTable(
+tt_tumor_vs_Healthy <- topTable(
   fit_all,
   coef   = "diagnosisHealthy",
   number = Inf,
   sort.by = "P"
 )
-head(tt_tumor_vs_normal)
+head(tt_tumor_vs_Healthy)
 ```
 
 **View Differential Expression Results**
 
 ```{r}
-tt_tumor_vs_normal <- tt_tumor_vs_normal |>
+tt_tumor_vs_Healthy <- tt_tumor_vs_Healthy |>
   rownames_to_column("ProbeID") |>
   left_join(
     feature_data |>
@@ -97,23 +99,24 @@ tt_tumor_vs_normal <- tt_tumor_vs_normal |>
   ) |>
   relocate(Gene.Symbol, .after = ProbeID)
 
-head(tt_tumor_vs_normal)
+head(tt_tumor_vs_Healthy)
 ```
 
 **Number of significant genes (FDR\<0.05, \|logFC\|\>1):**
 
 ```{r}
-sum(
-    tt_tumor_vs_normal$adj.P.Val < 0.05 &
-    abs(tt_tumor_vs_normal$logFC) > 1
-)
+signif_genes_count <- tt_tumor_vs_Healthy |> 
+  filter(adj.P.Val < 0.05, abs(logFC) > 1) |>
+  nrow()
+
+signif_genes_count
 ```
 
 **Save Results**
 
 ```{r}
 DE_results <- list(
-  Tumor_vs_Normal = tt_tumor_vs_normal
+  Tumor_vs_Healthy = tt_tumor_vs_Healthy
 )
 ```
 
@@ -130,14 +133,14 @@ source("99_proj_func.R")
 We construct a Reactome co-membership network using gene–pathway incidence data. The edges reflect shared pathway membership and seed genes serve as anchors for selecting relevant subnetworks. After Louvain community detection, we extract the largest connected clusters and compute core network statistics including modules, hubs, and connectivity.
 
 ```{r}
-tag <- "Tumor_vs_Normal"
+tag <- "Tumor_vs_Healthy"
 
 tt_gene <- collapse_to_genes(
   DE_results[[tag]],
   feature_data
 )
 
-universe_symbols <- tt_gene$symbol
+universe_symbols <- tt_gene |> pull(symbol)
 head(universe_symbols)
 ```
 
@@ -197,11 +200,18 @@ length(unique(reactome_df$gs_name))
 ```
 
 ```{r}
-genes <- sort(unique(reactome_df$gene_symbol))
-paths <- sort(unique(reactome_df$gs_name))
+genes <- reactome_df|> pull(gene_symbol) |> unique()  |>  sort()
+paths <- reactome_df |>  pull(gs_name) |> unique() |>  sort()
 
-gi <- match(reactome_df$gene_symbol, genes)
-pi <- match(reactome_df$gs_name, paths)
+gi <- reactome_df |> 
+  mutate(gene_factor = factor(gene_symbol, levels = genes))  |> 
+  pull(gene_factor)  |> 
+  as.integer()
+
+pi <- reactome_df |> 
+  mutate(path_factor = factor(gs_name, levels = paths))  |> 
+  pull(path_factor)  |> 
+  as.integer()
 ```
 
 **Make Adjacency Matrix**
@@ -264,7 +274,11 @@ edges <- tibble(
 **Define Vertices**
 
 ```{r}
-node_syms <- sort(unique(c(edges$from, edges$to)))
+node_syms <- edges |> 
+  select(from, to) |> 
+  flatten_chr()  |> 
+  unique()  |> 
+  sort()
 ```
 
 **Define Graph**
@@ -329,7 +343,9 @@ gsize(g)
 **Modules detected:**
 
 ```{r}
-length(unique(V(g)$module))
+V(g)$module  |> 
+  unique() |> 
+  length()
 ```
 
 ```{r}
@@ -575,7 +591,7 @@ write_csv(
 
 ## Extraction of Key Differentially Expressed Genes
 
-From the annotated network, we extract the top 20 upregulated and top 20 downregulated genes. These represent highly differentiated genes in the Tumor vs Normal contrast and are used for summarizing key biological processes in the data.
+From the annotated network, we extract the top 20 upregulated and top 20 downregulated genes. These represent highly differentiated genes in the Tumor vs Healthy contrast and are used for summarizing key biological processes in the data.
 
 ```{r}
 top20_up <- nodes_out |>

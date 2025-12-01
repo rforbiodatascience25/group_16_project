@@ -144,7 +144,7 @@ plot_net_modules_hubs <- function(
     vertex.label = NA,
     main = paste0(
       tag,
-      " Reactome co-membership network (modules & hubs)"
+      "Co-membership network analysis on DE genes"
     )
   )
   
