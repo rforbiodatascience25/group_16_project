@@ -1,0 +1,15 @@
+{
+  "hash": "d76fcf46bd12b8a3358b350a481cd9ee",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"01_load\"\nformat: html\n---\n\n\n\n# Load Data\n\n## Load Libraries\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(GEOquery)\nlibrary(tidyverse)\n```\n:::\n\n\n\n## Load Raw Data\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nif (!dir.exists(\"../data/_raw\")) {\n  dir.create(\"../data/_raw\", recursive = TRUE)\n}\n\nraw_file <- \"../data/_raw/GSE45827.RData\"\n\nif (!file.exists(raw_file)) {\n  gse <- getGEO(\"GSE45827\", GSEMatrix = TRUE)\n  save(gse, file = raw_file)\n} else {\n  load(raw_file)\n}\n```\n:::\n\n\n\n## Split Raw Data into 3 main Data Frames\n\n-   Gene expression Data\n\n-   Sample Metadata\n\n-   Gene Metadata\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nexprSet <- gse[[1]]\n\nexpr_data <- exprs(exprSet)\npheno_data <- pData(exprSet)\nfeature_data <- fData(exprSet)\n```\n:::\n\n\n\n\n## Save Data Frames into csv files\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nwrite.csv(expr_data, \"../data/GSE45827_expression.csv\")\nwrite.csv(pheno_data, \"../data/GSE45827_Phenotype_metadata.csv\")\nwrite.csv(feature_data, \"../data/GSE45827_Feature_metadata.csv\")\n```\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

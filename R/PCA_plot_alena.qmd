@@ -1,0 +1,59 @@
+---
+title: "PCA_plot_alena"
+format: html
+---
+
+
+```{r}
+library(tidyverse)
+#install.packages("ggbiplot")
+library(ggbiplot)
+#install.packages("devtools")
+library(devtools)
+
+```
+```{r}
+transp_expr <- t(expr_data)
+```
+
+```{r}
+transp_expr <- data.frame(transp_expr)
+```
+
+
+```{r}
+transp_expr <- transp_expr |> mutate(subtype = pheno_data$`tumor subtype:ch1`)
+```
+
+```{r}
+transp_expr <- transp_expr |> filter(!is.na(subtype))
+```
+
+```{r}
+transp_expr <- transp_expr |> mutate(subtype = ifelse(subtype == "N/A", "Normal", subtype))
+```
+
+
+```{r}
+transp_expr |> select(subtype)
+```
+
+
+
+```{r}
+pc <- prcomp(transp_expr[-29874], center = TRUE, scale. = TRUE)
+```
+
+```{r}
+
+```
+
+```{r}
+ggbiplot(pc, 
+         obs.scale = 1,
+         var.scale = 1,
+         groups = transp_expr$subtype,
+         var.axes = FALSE)
+  
+```
+

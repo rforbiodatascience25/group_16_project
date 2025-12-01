@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Clean Data</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="02_clean_files/libs/clipboard/clipboard.min.js"></script>
+<script src="02_clean_files/libs/quarto-html/quarto.js"></script>
+<script src="02_clean_files/libs/quarto-html/popper.min.js"></script>
+<script src="02_clean_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="02_clean_files/libs/quarto-html/anchor.min.js"></script>
+<link href="02_clean_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="02_clean_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="02_clean_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="02_clean_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="02_clean_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Clean Data</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="clean-data" class="level1">
+<h1>Clean Data</h1>
+<section id="load-libraries" class="level2">
+<h2 class="anchored" data-anchor-id="load-libraries">Load Libraries</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="load-data" class="level2">
+<h2 class="anchored" data-anchor-id="load-data">Load Data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>expr_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"../data/GSE45827_expression.csv"</span>, <span class="at">row.names =</span> <span class="dv">1</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>feature_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"../data/GSE45827_Feature_metadata.csv"</span>, <span class="at">row.names =</span> <span class="dv">1</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>pheno_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"../data/GSE45827_Phenotype_metadata.csv"</span>, <span class="at">row.names =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="phenotype-data-cleaning" class="level2">
+<h2 class="anchored" data-anchor-id="phenotype-data-cleaning">Phenotype Data Cleaning</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>cell_lines <span class="ot">&lt;-</span> pheno_data <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="st">`</span><span class="at">source_name_ch1</span><span class="st">`</span> <span class="sc">==</span> <span class="st">"Human CellLine"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>pheno_data <span class="ot">&lt;-</span> pheno_data <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="st">`</span><span class="at">source_name_ch1</span><span class="st">`</span> <span class="sc">!=</span> <span class="st">"Human CellLine"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pheno_data <span class="ot">&lt;-</span> pheno_data <span class="sc">|&gt;</span> </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>          <span class="fu">select</span>(<span class="st">"diagnosis.ch1"</span>, <span class="st">"tumor.subtype.ch1"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">mutate</span>(<span class="st">`</span><span class="at">diagnosis.ch1</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">diagnosis.ch1</span><span class="st">`</span> <span class="sc">==</span> <span class="st">"None (normal)"</span>, <span class="st">"Healthy"</span>, <span class="st">`</span><span class="at">diagnosis.ch1</span><span class="st">`</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>          <span class="fu">mutate</span>(<span class="st">`</span><span class="at">tumor.subtype.ch1</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">tumor.subtype.ch1</span><span class="st">`</span> <span class="sc">==</span> <span class="st">"N/A"</span>, <span class="st">"Healthy"</span>,<span class="st">`</span><span class="at">tumor.subtype.ch1</span><span class="st">`</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>          <span class="fu">rename</span>(<span class="st">"diagnosis"</span> <span class="ot">=</span><span class="st">"diagnosis.ch1"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"subtype"</span> <span class="ot">=</span> <span class="st">"tumor.subtype.ch1"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>          <span class="fu">mutate</span>(<span class="at">diagnosis =</span> <span class="fu">factor</span>(diagnosis),</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">subtype =</span> <span class="fu">factor</span>(subtype))</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(pheno_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               diagnosis subtype
+GSM1116084 Breast cancer   Basal
+GSM1116085 Breast cancer   Basal
+GSM1116086 Breast cancer    Her2
+GSM1116087 Breast cancer   Basal
+GSM1116088 Breast cancer    Her2
+GSM1116089 Breast cancer    Her2</code></pre>
+</div>
+</div>
+</section>
+<section id="feature-data-cleaning" class="level2">
+<h2 class="anchored" data-anchor-id="feature-data-cleaning">Feature Data Cleaning</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>missing_geneIDs <span class="ot">&lt;-</span> (feature_data <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="st">`</span><span class="at">ENTREZ_GENE_ID</span><span class="st">`</span> <span class="sc">==</span> <span class="st">""</span>))<span class="sc">$</span>ID</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>feature_data <span class="ot">&lt;-</span> feature_data <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>          <span class="fu">select</span>(<span class="st">"Gene.Symbol"</span>, <span class="st">"Gene.Title"</span>, <span class="st">"ENTREZ_GENE_ID"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">filter</span>(<span class="st">`</span><span class="at">ENTREZ_GENE_ID</span><span class="st">`</span> <span class="sc">!=</span> <span class="st">""</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(feature_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               Gene.Symbol
+1007_s_at DDR1 /// MIR4640
+1053_at               RFC2
+117_at               HSPA6
+1294_at   MIR5193 /// UBA7
+1316_at               THRA
+1405_i_at             CCL5
+                                                             Gene.Title
+1007_s_at discoidin domain receptor tyrosine kinase 1 /// microRNA 4640
+1053_at                     replication factor C (activator 1) 2, 40kDa
+117_at                             heat shock 70kDa protein 6 (HSP70B')
+1294_at   microRNA 5193 /// ubiquitin-like modifier activating enzyme 7
+1316_at                                 thyroid hormone receptor, alpha
+1405_i_at                                chemokine (C-C motif) ligand 5
+              ENTREZ_GENE_ID
+1007_s_at  780 /// 100616237
+1053_at                 5982
+117_at                  3310
+1294_at   7318 /// 100847079
+1316_at                 7067
+1405_i_at               6352</code></pre>
+</div>
+</div>
+</section>
+<section id="gene-expression-data-cleaning" class="level2">
+<h2 class="anchored" data-anchor-id="gene-expression-data-cleaning">Gene Expression Data Cleaning</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>expr_data <span class="ot">&lt;-</span> expr_data <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>cell_lines<span class="sc">$</span>geo_accession)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>expr_data <span class="ot">&lt;-</span> expr_data[<span class="sc">!</span>(<span class="fu">rownames</span>(expr_data) <span class="sc">%in%</span> missing_geneIDs), ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(expr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          GSM1116084 GSM1116085 GSM1116086 GSM1116087 GSM1116088 GSM1116089
+1007_s_at    9.47065    9.67440   10.20800   10.11420   11.16360   10.00690
+1053_at      8.36311    8.72194    7.78601    9.44537    7.71242    7.84274
+117_at       5.95426    7.02523    6.39671    4.56023    5.29008    6.21590
+1294_at      6.02119    7.24581    6.85310    5.42786    7.51120    5.79719
+1316_at      3.22997    3.29352    3.26204    3.34766    3.59086    3.40108
+1405_i_at   10.82220    9.29455    9.45727   11.51270    8.83075    9.07636
+          GSM1116090 GSM1116091 GSM1116092 GSM1116093 GSM1116094 GSM1116095
+1007_s_at    9.53932    9.00187    6.54074   10.35510   10.03780   10.64580
+1053_at      7.56238    8.01540    9.37874    9.45426    8.09954    8.21743
+117_at       6.42180    6.23554    5.43541    3.85652    6.14728    4.53397
+1294_at      7.36700    7.17268    7.72472    4.79560    7.16894    6.62358
+1316_at      3.27663    3.14212    3.28420    3.27900    3.20978    3.76888
+1405_i_at   10.99010   11.15940    9.05848    3.90108   11.01210   10.27710
+          GSM1116096 GSM1116097 GSM1116098 GSM1116099 GSM1116100 GSM1116101
+1007_s_at   10.44950    8.37233    9.48393   10.14140   10.23970    8.60988
+1053_at      8.47638    7.84711    8.50635    7.92972    8.21145    8.33146
+117_at       5.34788    5.71406    8.07714    5.91339    4.60687    8.02299
+1294_at      6.34457    6.70367    7.73885    5.75826    4.27389    7.41340
+1316_at      4.29495    3.25288    3.26944    3.15866    5.43945    3.25189
+1405_i_at    9.25481   11.68160   10.81010    9.70204    6.32607   12.07530
+          GSM1116102 GSM1116103 GSM1116104 GSM1116105 GSM1116106 GSM1116107
+1007_s_at    9.30953   10.11580   10.22820   10.93370   10.45010   10.77400
+1053_at      6.61467    8.24303    7.64069    7.84357    6.66872    7.73258
+117_at       6.03981    5.21013    6.39396    5.28530    5.93382    6.65636
+1294_at      5.75151    7.16413    6.68933    5.86029    7.33326    6.76149
+1316_at      3.25374    3.26923    3.31252    5.20997    3.38905    4.68509
+1405_i_at    9.49139   11.16260   10.97000    8.03392    9.47221   10.10680
+          GSM1116108 GSM1116109 GSM1116110 GSM1116111 GSM1116112 GSM1116113
+1007_s_at    9.09858    9.82919    9.76393    9.71049    9.63422    9.32985
+1053_at      8.49295    8.04391    9.21119    7.94075    8.60913    9.05156
+117_at       7.89833    6.25110    6.20520    6.67730    6.80008    6.02124
+1294_at      7.40775    7.80644    7.27217    7.21996    7.01729    5.49913
+1316_at      3.38779    3.44371    3.21386    3.46664    3.36358    3.51126
+1405_i_at    9.27153   12.08370    9.22943   13.18300    8.84037    8.63069
+          GSM1116114 GSM1116115 GSM1116116 GSM1116117 GSM1116118 GSM1116119
+1007_s_at    9.13237   10.21230   10.63470   10.19650   10.24290    9.60890
+1053_at      7.59912    8.06179    7.61327    7.79566    8.78981    7.23565
+117_at       6.51987    5.56796    5.73829    4.46156    6.21806    6.28429
+1294_at      7.48972    7.37151    6.31337    6.78600    4.28586    6.41148
+1316_at      3.46957    3.50170    3.49541    3.37617    3.29193    3.30101
+1405_i_at   10.45860   11.22110    9.28118    8.79246    6.47523    7.82935
+          GSM1116120 GSM1116121 GSM1116122 GSM1116123 GSM1116124 GSM1116125
+1007_s_at    9.32680   10.51060   10.56970   10.14730    8.34806    9.40561
+1053_at      9.35174    7.78091    7.88528    7.39454    8.37482    9.00709
+117_at       7.68198    6.02321    5.65715    5.87484    9.14238    6.95742
+1294_at      6.12185    7.75981    5.18566    4.53755    7.56331    5.64746
+1316_at      3.46059    3.42653    3.27581    3.41536    3.00087    3.50872
+1405_i_at   10.30090    9.90023    7.87248    5.74762   11.55320    7.60097
+          GSM1116126 GSM1116127 GSM1116128 GSM1116129 GSM1116130 GSM1116131
+1007_s_at   10.56410    9.73944   11.17040    9.72613   10.91060    8.60770
+1053_at      7.68875    7.48572    8.39529    7.56226    8.89892    9.25822
+117_at       3.85010    5.27981    4.83188    6.01448    5.93541    5.89744
+1294_at      4.60215    6.02859    5.25828    6.97893    7.25988    6.91073
+1316_at      3.35819    3.45760    3.55184    3.53388    3.45018    3.44218
+1405_i_at    7.68352    8.54279    8.30117    9.83481   11.94790   11.02720
+          GSM1116132 GSM1116133 GSM1116134 GSM1116135 GSM1116136 GSM1116137
+1007_s_at   10.38040   10.38110    9.81215    9.46771    9.67632   11.02460
+1053_at      8.14164    8.61716    8.19241    9.16920    7.79396    7.37765
+117_at       6.18358    5.85304    5.95543    7.70911    6.81969    3.69656
+1294_at      7.22719    6.23028    7.06389    6.98866    7.60068    5.94035
+1316_at      3.55619    3.43374    3.36207    3.46215    3.43788    3.47543
+1405_i_at    9.95795   10.16090    9.73054    9.94269   13.15470    8.46334
+          GSM1116138 GSM1116139 GSM1116140 GSM1116141 GSM1116142 GSM1116143
+1007_s_at   10.72650    9.75026   10.02410   10.34230   11.15420   11.03680
+1053_at      9.03221    8.50789    8.29344    8.46184    8.13731    7.92881
+117_at       4.36727    6.00113    7.07612    4.60736    5.55893    5.45299
+1294_at      5.39965    6.57596    8.27016    6.90693    6.27358    7.08893
+1316_at      3.46998    3.43276    3.40720    3.54718    3.41575    3.53040
+1405_i_at    5.83059    9.06461   10.07030    9.54387    9.85074    9.44319
+          GSM1116144 GSM1116145 GSM1116146 GSM1116147 GSM1116148 GSM1116149
+1007_s_at    9.45143   10.43290   10.34100   10.00610    9.18151    9.82593
+1053_at      7.88506    7.60771    8.44041    8.15492    7.85672    8.63647
+117_at       5.94825    5.96213    4.84830    5.97218    6.99499    6.10333
+1294_at      7.18415    5.49201    8.34065    8.22314    7.66849    4.42144
+1316_at      3.47865    3.44486    3.45237    3.66663    3.45032    3.41282
+1405_i_at    9.69099   10.88730    6.90163   11.92430   13.12450    4.37651
+          GSM1116150 GSM1116151 GSM1116152 GSM1116153 GSM1116154 GSM1116169
+1007_s_at   10.60630   10.00750   10.61570   10.40530    9.88982    9.35983
+1053_at      8.47677    7.14085    7.82552    7.89417    8.18059    5.64109
+117_at       7.45326    6.98528    6.52667    3.65791    5.86942    4.99282
+1294_at      7.32962    6.67545    6.29934    3.89667    7.31286    8.90312
+1316_at      3.38273    3.51544    3.43433    3.46764    6.05066    5.64136
+1405_i_at   10.05190    9.71083    8.17840    4.61677    8.95093    7.72109
+          GSM1116170 GSM1116171 GSM1116172 GSM1116173 GSM1116174 GSM1116175
+1007_s_at    8.92862    8.51747    9.90086    9.99184    9.80457   10.12430
+1053_at      4.97958    5.62614    6.74438    5.70238    6.54442    5.86945
+117_at       3.40532    4.93056    4.49811    3.20804    3.37099    3.77733
+1294_at      8.82710    7.60378    8.27273    8.02270    8.54070    7.56151
+1316_at      4.93700    4.35846    3.49625    4.48971    3.83661    4.31389
+1405_i_at    8.30833    6.77847    9.99734    8.51383    7.61147    7.86122
+          GSM1116176 GSM1116177 GSM1116178 GSM1116179 GSM1116180 GSM1116181
+1007_s_at    9.29848    9.56321    9.96914    9.34603    9.25581    9.65648
+1053_at      5.25887    5.95661    5.45792    5.59836    7.42271    7.03281
+117_at       4.46238    4.52445    3.14352    4.68036    5.90116    5.01108
+1294_at      8.28166    7.74364    8.29586    8.61736    6.39339    7.75967
+1316_at      5.43182    4.06242    4.57299    4.32659    3.31515    3.34000
+1405_i_at   10.42320    7.95438    8.82569    8.95082    8.82882   10.15770
+          GSM1116182 GSM1116183 GSM1116184 GSM1116185 GSM1116186 GSM1116187
+1007_s_at   10.69700    9.40894    9.67101   10.23830   10.98810   10.27890
+1053_at      6.50217    8.05199    6.70343    7.57718    7.55192    7.39894
+117_at       4.74508    4.98127    4.26019    5.84402    8.00253    4.94541
+1294_at      8.36900    7.78085    6.79128    7.97305    5.53963    7.72522
+1316_at      3.88383    3.77328    3.14845    3.09275    3.09580    3.09989
+1405_i_at    9.73859   10.05880    7.23410   10.36570    7.94184    7.28429
+          GSM1116188 GSM1116189 GSM1116190 GSM1116191 GSM1116192 GSM1116193
+1007_s_at   10.76200   10.89270    9.26293    9.79335   11.46010   10.16940
+1053_at      6.64115    7.70086    7.22615    6.79832    7.28488    8.05798
+117_at       5.96162    5.87287    5.41029    5.41365    3.95833    7.57243
+1294_at      8.20000    5.21315    7.92009    5.79406    6.81766    7.10004
+1316_at      3.64292    3.11153    3.42857    3.55201    4.36604    3.47430
+1405_i_at   10.00680    7.58043   10.30670    8.30816    5.10893    5.79861
+          GSM1116194 GSM1116195 GSM1116196 GSM1116197 GSM1116198 GSM1116199
+1007_s_at    9.68111    9.23725   10.37060   10.83540   10.59460   10.99180
+1053_at      6.84965    7.29869    7.45002    7.79156    7.68441    6.88320
+117_at       5.70363    4.10106    6.13145    5.73012    6.04729    5.63173
+1294_at      7.59827    7.23315    7.32834    7.67770    8.44960    8.54789
+1316_at      3.25987    3.21713    3.35170    3.37411    4.31510    3.56032
+1405_i_at    8.25211    8.69420    8.77493    8.18677    7.95585    7.43344
+          GSM1116200 GSM1116201 GSM1116202 GSM1116203 GSM1116204 GSM1116205
+1007_s_at   10.79090   10.62090   10.09620   10.75440   10.40590   10.21630
+1053_at      6.40945    8.19011    7.51218    7.12197    7.15877    7.06667
+117_at       5.61878    4.92947    4.83212    6.28205    5.57738    4.66778
+1294_at      7.72629    6.83900    7.69850    8.06425    7.38860    7.66124
+1316_at      3.54930    3.86601    3.39656    3.53381    3.42532    3.45824
+1405_i_at    8.93008    8.05753   11.08530    9.05865    9.05033    8.42317
+          GSM1116206 GSM1116207 GSM1116208 GSM1116209 GSM1116210 GSM1116211
+1007_s_at   10.52240   10.86100   10.08800    9.83567   10.87340    9.66704
+1053_at      7.51896    8.13146    6.99632    6.67889    7.33159    7.62965
+117_at       4.79932    5.16531    4.51390    6.13449    5.10775    7.89241
+1294_at      6.96686    6.02907    6.32999    7.39462    7.72787    7.93732
+1316_at      2.71935    3.76245    3.40397    3.20680    3.29536    3.28591
+1405_i_at    3.10081    8.80312    6.75887    8.75712    9.76065   11.08520
+          GSM1116212 GSM1116213 GSM1116214 GSM1116215 GSM1116216 GSM1116217
+1007_s_at    9.90649   10.09700   10.62790   10.47760   10.72790   11.10140
+1053_at      7.00497    6.99333    8.35771    7.08194    6.84023    7.25026
+117_at       6.65585    5.75165    7.25363    6.55543    6.29517    4.81102
+1294_at      5.11427    6.85385    6.87828    5.77793    7.78182    7.12204
+1316_at      3.22342    3.27224    4.42596    4.64599    3.26699    3.22369
+1405_i_at    5.09954    5.54300    8.36752    6.91176    5.68833    7.36957
+          GSM1116218 GSM1116219 GSM1116220 GSM1116221 GSM1116222 GSM1116223
+1007_s_at   10.33500   10.84180    9.67831   10.70170   10.55280   10.33530
+1053_at      7.39641    7.36747    6.91589    5.68589    6.08820    7.35386
+117_at       6.32739    6.09316    5.47914    4.42508    6.89790    5.32343
+1294_at      7.36391    7.71262    6.74362    7.21228    8.56077    7.24038
+1316_at      3.36470    3.52831    3.53458    3.64618    3.34790    3.39311
+1405_i_at    7.16191   10.12290    5.93992    6.99717   10.92980    8.09043
+          GSM1116224 GSM1116225 GSM1116226 GSM1116227 GSM1116228 GSM1116229
+1007_s_at   10.29450   11.09440   10.76850    9.95321   10.22810    9.96811
+1053_at      7.20402    7.31024    8.18165    7.38766    6.96242    7.25745
+117_at       5.91998    5.48543    5.67256    6.54564    6.46595    8.35832
+1294_at      8.17657    7.31011    6.90715    8.54326    7.52390    7.18591
+1316_at      3.88391    3.62851    3.55888    3.58091    3.39838    3.50312
+1405_i_at    9.85975    4.42757    6.36115   13.06410    9.40301    8.25920
+          GSM1116230 GSM1116231 GSM1116232 GSM1116233 GSM1116234 GSM1116235
+1007_s_at   10.10680   10.03290    9.84599   10.75850   10.55470    9.45290
+1053_at      7.54377    7.41607    5.83454    8.83376    6.88277    6.83700
+117_at       6.98743    4.50611    4.78051    4.55847    4.14597    6.10766
+1294_at      7.74070    7.44448    7.03001    6.87039    6.37882    6.99674
+1316_at      3.57309    3.31572    3.70289    4.82208    3.55309    3.23899
+1405_i_at    8.46990    7.32929    7.18265    8.87394    6.36287    9.56499
+          GSM1116236 GSM1116237 GSM1116238
+1007_s_at   10.80010   10.04640   11.42010
+1053_at      7.29371    7.71122    7.63877
+117_at       5.41169    4.57742    4.67159
+1294_at      8.37598    6.56774    7.40374
+1316_at      3.84879    3.28091    3.24882
+1405_i_at    8.11443    8.07087    8.44304</code></pre>
+</div>
+</div>
+</section>
+<section id="save-clean-data" class="level2">
+<h2 class="anchored" data-anchor-id="save-clean-data">Save Clean Data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(expr_data, <span class="st">"../data/GSE45827_clean_expression.csv"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pheno_data, <span class="st">"../data/GSE45827_clean_Phenotype_metadata.csv"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(feature_data, <span class="st">"../data/GSE45827_clean_Feature_metadata.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
