@@ -4,10 +4,48 @@ subtitle: "Ángela Garcinuño Feliciano, Magdalena Paulina Flaszyńska, Natali S
 format: revealjs
 ---
 
-## Description (Angela)
 
--   data preparation (what, how cleaning, what doing with it)
--   cancer subtypes
+```{r}
+library(dplyr)
+expr_data <- read.csv("data/GSE45827_clean_expression.csv", row.names = 1)
+feature_data <- read.csv("data/GSE45827_clean_Feature_metadata.csv", row.names = 1)
+pheno_data <- read.csv("data/GSE45827_clean_Phenotype_metadata.csv", row.names = 1)
+
+order <- c("Healthy", "Basal", "Her2", "Luminal A", "Luminal B")
+```
+
+## Introduction
+
+- Breast Cancer Subtypes: `{r} order`
+
+```{r}
+pheno_data |> group_by(subtype) |>  count() |> as.data.frame() |> arrange(match(subtype, order))
+```
+
+- We consider `{r} nrow(feature_data)` genes and `{r} nrow(pheno_data)` samples.
+
+- Differential Gene Expression Analysis
+  - Identify Enriched Pathways
+
+## Data
+
+-   Gene Expression Matrix
+
+```{r}
+expr_data[0:5,0:3]
+```
+
+-   Phenotype (Sample) Metadata
+
+```{r}
+pheno_data[0:2,]
+```
+
+-   Feature (Gene) Metadata
+
+```{r}
+feature_data[2,]
+```
 
 ## PCA Plot of Expression Data
 
@@ -28,30 +66,24 @@ format: revealjs
 :::
 :::::
 
-
 ## Differential Expression Results
 
 <br>
 
 ::: {style="font-size: 115%;"}
-
-
 | Comparison        | Down  | NotSig |  Up   |
 |:------------------|:-----:|:------:|:-----:|
 | **Basal vs Her2** | 4,214 | 17,359 | 4,895 |
 | **Basal vs LumA** | 7,551 | 10,767 | 8,150 |
 | **Her2 vs LumA**  | 5,390 | 15,936 | 5,142 |
 | **LumA vs LumB**  | 3,478 | 19,817 | 3,173 |
-
 :::
 
 ::: footer
 Summary of significantly up- and down-regulated genes (adjusted p-value \< 0.05).
-
 :::
 
 ## Most Significant Pathways
-
 
 ```{r}
 #| echo: true
@@ -70,35 +102,30 @@ fgseaRes <- fgseaMultilevel(
 <br>
 
 ::: {style="font-size: 80%;"}
-
-
-| Pathway                        | padj      |  NES  | leadingEdge|    
-|:-------------------------------|:---------:|:-----:|:----------:|
-| CHROMOSOME_SEGREGATION         | 2.002e-36 | 3.218 | <chr[108]> |
-| ORGANELLE_FISSION              | 1.392e-35 | 2.969 | <chr[127]> |
-| NUCLEAR_CHROMOSOME SEGREGATION | 5,312e-34 | 3.245 | <chr[91]>  |
-| MITOTIC_NUCLEAR_DIVISION       | 2.115e-29 | 3.066 | <chr[93]>  |
-| SISTER_CHROMATID_SEGREGATION   | 1.402e-28 | 3.242 | <chr[76]>  |
-
+| Pathway                        |   padj    |  NES  |  leadingEdge   |
+|:-------------------------------|:---------:|:-----:|:--------------:|
+| CHROMOSOME_SEGREGATION         | 2.002e-36 | 3.218 | \<chr\[108\]\> |
+| ORGANELLE_FISSION              | 1.392e-35 | 2.969 | \<chr\[127\]\> |
+| NUCLEAR_CHROMOSOME SEGREGATION | 5,312e-34 | 3.245 | \<chr\[91\]\>  |
+| MITOTIC_NUCLEAR_DIVISION       | 2.115e-29 | 3.066 | \<chr\[93\]\>  |
+| SISTER_CHROMATID_SEGREGATION   | 1.402e-28 | 3.242 | \<chr\[76\]\>  |
 :::
 
-## Leading Edge Genes in Top 5 Pathways 
+## Leading Edge Genes in Top 5 Pathways
 
 ::: {style="font-size: 70%;"}
-
 | Path 1 | Path 2 | Path 3 | Path 4 | Path 5 |
-|:---|:---|:---|:---|:---|
-| <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> | <span style="color: #e60000;">KIF2C</span> |
-| <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> | <span style="color: #e60000;">AURKB</span> |
-| <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> | <span style="color: #e60000;">KIF14</span> |
-| <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> | <span style="color: #e60000;">CEP55</span> |
-| <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> | <span style="color: #e60000;">BUB1</span> |
-| <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> | <span style="color: #e60000;">CDC20</span> |
-| <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> | <span style="color: #e60000;">TTK</span> |
+|:--------------|:--------------|:--------------|:--------------|:--------------|
+| [KIF2C]{style="color: #e60000;"} | [KIF2C]{style="color: #e60000;"} | [KIF2C]{style="color: #e60000;"} | [KIF2C]{style="color: #e60000;"} | [KIF2C]{style="color: #e60000;"} |
+| [AURKB]{style="color: #e60000;"} | [AURKB]{style="color: #e60000;"} | [AURKB]{style="color: #e60000;"} | [AURKB]{style="color: #e60000;"} | [AURKB]{style="color: #e60000;"} |
+| [KIF14]{style="color: #e60000;"} | [KIF14]{style="color: #e60000;"} | [KIF14]{style="color: #e60000;"} | [KIF14]{style="color: #e60000;"} | [KIF14]{style="color: #e60000;"} |
+| [CEP55]{style="color: #e60000;"} | [CEP55]{style="color: #e60000;"} | [CEP55]{style="color: #e60000;"} | [CEP55]{style="color: #e60000;"} | [CEP55]{style="color: #e60000;"} |
+| [BUB1]{style="color: #e60000;"} | [BUB1]{style="color: #e60000;"} | [BUB1]{style="color: #e60000;"} | [BUB1]{style="color: #e60000;"} | [BUB1]{style="color: #e60000;"} |
+| [CDC20]{style="color: #e60000;"} | [CDC20]{style="color: #e60000;"} | [CDC20]{style="color: #e60000;"} | [CDC20]{style="color: #e60000;"} | [CDC20]{style="color: #e60000;"} |
+| [TTK]{style="color: #e60000;"} | [TTK]{style="color: #e60000;"} | [TTK]{style="color: #e60000;"} | [TTK]{style="color: #e60000;"} | [TTK]{style="color: #e60000;"} |
 | FAM83D | TPX2 | FAM83D | TPX2 | CENPF |
 | MKI67 | ASPM | CENPF | MKI67 | CDCA5 |
 | CENPF | MKI67 | CDCA5 | CENPF | NDC80 |
-
 :::
 
 ::: footer
