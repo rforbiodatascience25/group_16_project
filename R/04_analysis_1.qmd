@@ -46,22 +46,23 @@ pc <- prcomp(expr_only, center = TRUE, scale. = TRUE)
 **PCA: Cancer vs Healthy**
 
 ```{r}
-ggbiplot(pc, 
+pca_cancer <- ggbiplot(pc, 
          obs.scale = 1,
          var.scale = 1,
          groups = transp_expr$diagnosis,
          var.axes = FALSE)
+pca_cancer
 ```
 
 **PCA: By Cancer Subtype**
 
 ```{r}
-ggbiplot(pc, 
+pca_subtype <- ggbiplot(pc, 
          obs.scale = 1,
          var.scale = 1,
          groups = transp_expr$subtype,
          var.axes = FALSE)
-  
+pca_subtype
 ```
 
 ## Data Analysis
@@ -71,3 +72,18 @@ PCA Plots are a tool for visualizing high dimensional data onto an orthogonal ba
 The second plot shows us which samples are similar in terms of their gene expression, and which ones are different, which reveals clusters of similarly behaving gene expression. As the coloring shows, the tumour subtypes are plotted in certain area of the graph. This means, there are patterns of gene expression within one subtype that differ generally from other subtypes. This proves clinic significance of the subtypes and enforces further analysis of the gene expression behavior.
 
 The first graph shows the more general plot and instead of plotting for all the different subtypes of tumor, we are looking at the genes that are highly expressed in all the breast cancers vs in normal cells, and colored based on these two variables.
+
+
+```{r}
+ggsave(filename = "../results/pca_cancer.png", plot = pca_cancer)
+```
+
+```{r}
+ggsave(filename = "../results/pca_subtypes.png", plot = pca_subtype)
+```
+
+```{r}
+ transp_expr |> 
+  slice_sample(n = 10) |> select(X1007_s_at, X1053_at, X177_at, subtype, cancer) |>
+   write_csv(file = "../results/changed_expr.csv")
+```
