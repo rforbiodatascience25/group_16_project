@@ -3,7 +3,9 @@ title: "Network Analysis"
 format: html
 ---
 
-# Load Libraries
+# Network Analysis
+
+## Load Libraries
 
 ```{r}
 #| message: false
@@ -21,7 +23,7 @@ library("Matrix")
 library("quarto")
 ```
 
-# Load Data
+## Load Data
 
 ```{r}
 expr_data <- read.csv(
@@ -47,7 +49,7 @@ names(pheno_data)[1] <- "SampleID"
 output_dir <- "../results"
 ```
 
-# Differential Expression Analysis
+## Differential Expression Analysis
 
 Analysis is performed using limma. It involves a linear model that is fitted for the Tumor vs Normal contrast and empirical Bayes shrinkage which is applied to stabilize variance estimates. All tested genes are carried forward to the network analysis, while significantly differentiated ones (e.g. FDR \< 0.05 and \|logFC\| \> 1) are later used as seed genes to anchor subnetworks.
 
@@ -115,7 +117,7 @@ DE_results <- list(
 )
 ```
 
-# Network Analysis
+## Network Analysis
 
 **Load Helper Functions**
 

@@ -1,44 +1,48 @@
 ---
-title: "magda"
+title: "Differential Gene Expression Analysis"
 format: html
 editor: visual
 ---
 
-# Load Libraries
+# Differential Gene Expression Analysis
+
+## Load Libraries
 
 ```{r}
+#| message: false
 library(limma)
 library(dplyr)
 library(msigdbr)
 library(fgsea)
 library(DESeq2)
 library(purrr)
+library(ggplot2)
 ```
 
-# Clear Data
+## Load Data
 
 ```{r}
-group_data_vector <- as.character(pheno_data$`tumor subtype:ch1`)
-
-samples_to_keep <- which(
-  group_data_vector == "Basal" | 
-  group_data_vector == "Her2" |
-  group_data_vector == "Luminal A" |
-  group_data_vector == "Luminal B"
+expr_data <- read.csv(
+  "../data/GSE45827_clean_expression.csv",
+  row.names = 1
 )
 
-pheno_data_filtered <- pheno_data[samples_to_keep, ]
-expr_data_filtered <- expr_data[, samples_to_keep]
+feature_data <- read.csv(
+  "../data/GSE45827_clean_Feature_metadata.csv",
+  row.names = 1
+)
 
-groups <- as.factor(pheno_data$'subtype')
-
-print(length(samples_to_keep))
-print(levels(groups))
+pheno_data <- read.csv(
+  "../data/GSE45827_clean_Phenotype_metadata.csv",
+  row.names = 1
+)
 ```
 
-# Linear Modeling and Differential Expression Analysis
+## Linear Modeling and Differential Expression Analysis
 
 ```{r}
+
+groups <- as.factor(pheno_data$subtype)
 design <- model.matrix(~ 0 + groups)
 
 clean_levels <- make.names(levels(groups))
@@ -60,7 +64,7 @@ fit_ebayes <- eBayes(fit_contrast)
 print(summary(decideTests(fit_ebayes)))
 ```
 
-# Preparing the Gene List
+## Preparing the Gene List
 
 ```{r}
 top_table <- topTable(fit_ebayes, coef = "Basal_vs_LumA", number = Inf)
@@ -91,7 +95,7 @@ stats <- sort(stats, decreasing = TRUE)
 head(stats)
 ```
 
-# Running GSEA
+## Running GSEA
 
 ```{r}
 BP_df <- msigdbr(species = "human", category = "C5", subcategory = "BP")
@@ -109,7 +113,7 @@ print("Top GSEA results (Basal_vs_LumA):")
 head(fgseaRes[order(padj), ])
 ```
 
-# The Enrichment Plot
+## The Enrichment Plot
 
 ```{r}
 fgseaRes_ordered <- fgseaRes[order(padj), ]
@@ -124,7 +128,7 @@ plotEnrichment(pathways[[top_pathway_name]],
   labs(title = top_pathway_name)
 ```
 
-# Getting the Top Genes
+## Getting the Top Genes
 
 ```{r}
 top_5_gene_lists <- fgseaRes_ordered$leadingEdge[1:5]
@@ -136,7 +140,7 @@ for (i in 1:5) {
 }
 ```
 
-# Intersection Analysis of Core Enrichment Genes
+## Intersection Analysis of Core Enrichment Genes
 
 ```{r}
 core_drivers <- Reduce(intersect, top_5_gene_lists)
@@ -149,7 +153,7 @@ res <- gene_counts_sorted[gene_counts_sorted >= 3]
 res
 ```
 
-# Saving Results
+## Saving Results
 
 ```{r}
 fgseaRes_flat <- fgseaRes

@@ -1,79 +1,59 @@
 ---
-title: "pca_Natali_Alena"
+title: "PCA Analysis"
 format: html
 ---
 
-# PCA Plot
+# PCA Analysis
 
-## Data Visualization
-
-### Load Libraries
+## Load Libraries
 
 ```{r}
+#| message: false
 library(tidyverse)
 library(ggbiplot)
 library(devtools)
 ```
 
-### Load Data
+## Load Data
 
 ```{r}
-expr_data <- read.csv("../data/GSE45827_expression.csv", row.names = 1)
-pheno_data <- read.csv("../data/GSE45827_Phenotype_metadata.csv", row.names = 1)
+expr_data <- read.csv("../data/GSE45827_clean_expression.csv", row.names = 1)
+pheno_data <- read.csv("../data/GSE45827_clean_Phenotype_metadata.csv", row.names = 1)
 ```
 
-### Tidy Data
+## PCA Calculation And Plotting
+
+**Format data for PCA**
 
 ```{r}
-transp_expr <- t(expr_data)
-```
+transp_expr <- t(expr_data) |> data.frame()
 
-```{r}
-transp_expr <- data.frame(transp_expr)
-```
-
-```{r}
 transp_expr <- transp_expr |>
-  mutate(cancer = pheno_data$`diagnosis.ch1`)
-```
+  mutate(diagnosis = pheno_data$diagnosis)
 
-```{r}
 transp_expr <- transp_expr |>
-  mutate(subtype = pheno_data$`tumor.subtype.ch1`)
+  mutate(subtype = pheno_data$subtype)
+
+expr_only <- transp_expr |>  select(-subtype, -diagnosis)
 ```
 
-```{r}
-transp_expr <- transp_expr |>
-  filter(!is.na(cancer))
-```
-
-```{r}
-transp_expr <- transp_expr |>
-  filter(!is.na(subtype))
-```
-
-```{r}
-transp_expr <- transp_expr|>
-  mutate(subtype = if_else(subtype == "N/A", "Normal", subtype))
-```
-
-### PCA Calculation And Plotting
-
-```{r}
-expr_only <- transp_expr |>  select(-subtype, -cancer)
-```
+**Perform PCA**
 
 ```{r}
 pc <- prcomp(expr_only, center = TRUE, scale. = TRUE)
 ```
 
+**PCA: Cancer vs Healthy**
+
 ```{r}
 ggbiplot(pc, 
          obs.scale = 1,
          var.scale = 1,
-         groups = transp_expr$cancer,
+         groups = transp_expr$diagnosis,
          var.axes = FALSE)
 ```
+
+**PCA: By Cancer Subtype**
 
 ```{r}
 ggbiplot(pc, 
